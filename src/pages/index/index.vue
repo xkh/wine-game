@@ -5,10 +5,15 @@
 			<view class="player-touch">测试</view>
 		</view>
 		<view class="player-stage">
-			<view class="player-start" @tap="eventShuffle">洗</view>
+			<view class="stage-left">
+				<view class="player-btn" :class="{'begin':isBegin}" @tap="eventShuffle">{{isBegin?'禁止洗':(isShuffle?'再洗一洗':'洗一洗')}}</view>
+				<view class="player-btn" @tap="eventStart">{{isBegin?'已开局':'开局'}}</view>
+				<view class="player-btn" @tap="eventShuffle"></view>
+				<view class="player-btn" @tap="eventOver">结束</view>
+			</view>
 			<view class="player-start-list" v-if="pokerList && pokerList.length">
 				<view class="poker-item" v-for="(poker, i) in pokerList" :key="i">
-					{{i+1}}+{{poker}}
+					*{{poker}}
 				</view>
 			</view>
 		</view>
@@ -37,6 +42,7 @@
 				// socketMsgQueue: ['000的'],
 				text:'aaa',
 				isShuffle: false, //是否已刷牌
+				isBegin: false, //是否开局
 			}
 		},
 		computed:{
@@ -73,7 +79,7 @@
 				uni.onSocketOpen((res)=>{
 					this.socketStatus = 1;
 					console.log('websocket已连接...',res);
-					this.sendSocketMessage({isShuffle: false, list:this.initPoker});
+					this.sendSocketMessage();
 				});
 				//监听socket 接受服务器的消息
 				uni.onSocketMessage((msg:object)=>{
@@ -109,11 +115,12 @@
 				}
 			},
 			//发送消息
-			sendSocketMessage(msg:object){
-				console.log('this.socketStatus...',this.socketStatus)
+			sendSocketMessage(msg={}){
+				const params = {isBegin:false, isShuffle:false, list:this.initPoker, ...msg};
+				console.log('this.socketStatus...',this.socketStatus,params)
 				if(this.socketStatus === 1){
 					uni.sendSocketMessage({
-						data: JSON.stringify({toId: '111', msg:JSON.stringify(msg)}) as any
+						data: JSON.stringify({toId: '111', msg:JSON.stringify(params)}) as any
 					})
 				}else{
 					console.log('未连接')
@@ -121,10 +128,24 @@
 			},
 			//刷新
 			eventShuffle(){
+				if(this.isBegin) return;
 				const pokerList = this.initPoker.sort(()=>{ return Math.random()>.5 ? -1 : 1}); 
 				this.pokerList = pokerList;
+				this.isShuffle = true;
 				console.log('pokerList...',JSON.stringify(this.pokerList));
 				this.sendSocketMessage({isShuffle: true, list:pokerList})
+			},
+			//开局禁止刷新
+			eventStart(){
+				if(!this.isBegin && this.isShuffle){
+					this.isBegin = true;
+					this.sendSocketMessage({isBegin: true});
+				}
+			},
+			eventOver(){
+				this.isShuffle = false;
+				this.isBegin = false;
+				this.sendSocketMessage({isBegin:false, isShuffle: false});
 			}
 		}
 	});
@@ -147,19 +168,32 @@
 	}
 	.player-stage{
 		flex: 1 1 auto;
+		display: flex;
+		flex-direction: row;
 		width: 100%;
 	}
-	.player-start{
+	.player-btn{
 		height: 100rpx;
 		line-height: 100rpx;
 		background: slateblue;
+		margin-bottom: 10rpx;
+	}
+	
+	.player-btn.begin{
+		background: #999999;
+		color: #ffffff;
+	}
+	.stage-left{
+		font-size: 26rpx;
+		width: 150rpx;
 	}
 	.player-start-list{
+		width: 600rpx;
 		height: 800rpx;
 		overflow: scroll;
 	}
 	.poker-item{
-		width: 250rpx;
+		width: 200rpx;
 		background: seagreen;
 		float: left;
 	}
