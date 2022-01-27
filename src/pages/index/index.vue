@@ -5,11 +5,16 @@
 			<view class="player-touch">测试</view>
 		</view>
 		<view class="player-stage">
-			<view class="player-start" @tap="eventShuffle">{{text}}</view>
+			<view class="player-start" @tap="eventShuffle">洗</view>
+			<view class="player-start-list" v-if="pokerList && pokerList.length">
+				<view class="poker-item" v-for="(poker, i) in pokerList" :key="i">
+					{{i+1}}+{{poker}}
+				</view>
+			</view>
 		</view>
 		<view class="player two">
 			<image class="player-img" src="../../static/logo.png"></image>
-			<view class="player-touch">测试</view>
+			<view class="player-touch">摸</view>
 		</view>
 	</view>
 </template>
@@ -29,8 +34,9 @@
 				},
 				pokerList:[],
 				socketStatus: 0,
-				socketMsgQueue: ['hello'],
+				// socketMsgQueue: ['000的'],
 				text:'aaa',
+				isShuffle: false, //是否已刷牌
 			}
 		},
 		computed:{
@@ -40,7 +46,8 @@
 				for(let p in poker){
 					if(poker[p].length){
 						poker[p].forEach((num: Number) => {
-							newPoker.push({[p]:num})
+							const pk = `${p}:${num}`;
+							newPoker.push(pk);
 						});
 					}
 				}
@@ -60,20 +67,23 @@
 				console.log('iii...')
 				//创建连接
 				uni.connectSocket({
-					url: 'ws://127.0.0.1:2001/game/wss',
+					url: 'ws://127.0.0.1:2001/game/wss/000',
 				});
 				//socket打开后
 				uni.onSocketOpen((res)=>{
 					this.socketStatus = 1;
 					console.log('websocket已连接...',res);
-					this.socketMsgQueue.map((msg:string)=>{
-						this.sendSocketMessage(msg);
-					})
+					this.sendSocketMessage({isShuffle: false, list:this.initPoker});
 				});
 				//监听socket 接受服务器的消息
-				uni.onSocketMessage((msg)=>{
+				uni.onSocketMessage((msg:object)=>{
+					const{data}= msg as any;
+					const {isShuffle, list} = JSON.parse(data);
+					if(list && list.length){
+						this.pokerList = list;
+						this.isShuffle = isShuffle;
+					}
 					console.log('websocket监听到消息！！！',msg)
-					const {data} = msg;
 					that.text = data;
 				});
 				//socket断开后
@@ -99,21 +109,22 @@
 				}
 			},
 			//发送消息
-			sendSocketMessage(msg:string){
+			sendSocketMessage(msg:object){
 				console.log('this.socketStatus...',this.socketStatus)
 				if(this.socketStatus === 1){
 					uni.sendSocketMessage({
-						data: msg
+						data: JSON.stringify({toId: '111', msg:JSON.stringify(msg)}) as any
 					})
 				}else{
-					this.socketMsgQueue.push(msg);
+					console.log('未连接')
 				}
 			},
 			//刷新
 			eventShuffle(){
-				this.pokerList = this.initPoker.sort(()=>{ return Math.random()>.5 ? -1 : 1});
+				const pokerList = this.initPoker.sort(()=>{ return Math.random()>.5 ? -1 : 1}); 
+				this.pokerList = pokerList;
 				console.log('pokerList...',JSON.stringify(this.pokerList));
-				this.sendSocketMessage('mmmmm')
+				this.sendSocketMessage({isShuffle: true, list:pokerList})
 			}
 		}
 	});
@@ -130,12 +141,27 @@
 	.player {
 		flex: 0 0 auto;
 		display: flex;
-		height: 200rpx;
+		height: 150rpx;
 		background: #eeeeee;
 		width: 100%;
 	}
 	.player-stage{
 		flex: 1 1 auto;
+		width: 100%;
+	}
+	.player-start{
+		height: 100rpx;
+		line-height: 100rpx;
+		background: slateblue;
+	}
+	.player-start-list{
+		height: 800rpx;
+		overflow: scroll;
+	}
+	.poker-item{
+		width: 250rpx;
+		background: seagreen;
+		float: left;
 	}
 	.player-img{
 		height: 100rpx;
