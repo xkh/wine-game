@@ -129,8 +129,8 @@ export default Vue.extend({
     //发送消息
     sendSocketMessage(msg = {}) {
       const params = {
-        isBegin: false,
-        isShuffle: false,
+        isBegin: this.isBegin,
+        isShuffle: this.isShuffle,
         list: this.initPoker,
         ...msg,
       };
@@ -172,6 +172,8 @@ export default Vue.extend({
     eventOver() {
       this.isShuffle = false;
       this.isBegin = false;
+	  this.cardOne = '';
+	  this.cardTwo = '';
       this.sendSocketMessage({ isBegin: false, isShuffle: false });
 	  uni.setStorage({
         key: "WS_MESSAGE",
