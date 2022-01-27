@@ -26,7 +26,9 @@
     </view>
     <view class="player two">
       <image class="player-img" src="../../static/logo.png"></image>
-      <view class="player-touch">摸</view>
+      <view class="player-touch" @tap="eventGetCard">摸</view>
+      <view class="player-card">{{cardOne}}</view>
+      <view class="player-card">{{cardTwo}}</view>
     </view>
   </view>
 </template>
@@ -48,6 +50,8 @@ export default Vue.extend({
       socketStatus: 0,
       isShuffle: false, //是否已刷牌
       isBegin: false, //是否开局
+	  cardOne: '',
+	  cardTwo: ''
     };
   },
   computed: {
@@ -187,6 +191,24 @@ export default Vue.extend({
         },
       });
     },
+	eventGetCard(){
+		if(this.cardOne && this.cardTwo){
+			this.cardOne = '';
+			this.cardTwo = '';
+			return;
+		}
+		const pokerList = this.pokerList;
+		const card = pokerList[0]
+		if(!this.cardOne){
+			this.cardOne = card;
+		}else if(!this.cardTwo){
+			this.cardTwo = card;
+		}
+		const newList = pokerList.slice(1,55);
+		this.pokerList = newList;
+		this.sendSocketMessage({list: newList});
+		console.log('card...',card,newList)
+	}
   },
 });
 </script>
