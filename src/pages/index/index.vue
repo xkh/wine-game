@@ -73,7 +73,8 @@
 				//监听socket 接受服务器的消息
 				uni.onSocketMessage((msg)=>{
 					console.log('websocket监听到消息！！！',msg)
-					// that.text=msg;
+					const {data} = msg;
+					that.text = data;
 				});
 				//socket断开后
 				uni.onSocketClose((res)=>{
