@@ -125,13 +125,13 @@ export default Vue.extend({
   },
   onLoad() {
     console.log("initPoker...", this.initPoker);
-    this.autoLogin().then(res=>{
-      const {code, data}=res as any;
-      if(code===0){
-        const {openid} = data;
-        console.log('openid...', openid)
+    this.autoLogin().then((res) => {
+      const { code, data } = res as any;
+      if (code === 0) {
+        const { id } = data;
+        console.log("id...", id);
       }
-    })
+    });
   },
   methods: {
     getUserProfile() {
@@ -159,7 +159,7 @@ export default Vue.extend({
       if (!id) return;
       //创建连接
       uni.connectSocket({
-        url: "wss:api.xonepage.com/game/wss/"+id,
+        url: "wss:api.xonepage.com/game/wss/" + id,
         // url: "ws://127.0.0.1:2001/game/wss/" + id,
       });
       //socket打开后
@@ -325,25 +325,29 @@ export default Vue.extend({
       return new Promise((resolve) => {
         uni.login({
           async success(res: any) {
-            console.log('rrr...',res)
-            const {code}= res;
+            console.log("rrr...", res);
+            const { code } = res;
             if (code) {
               uni.request({
-                url: baseUrl+'auth',
-                method:'POST',
-                data:{code},
+                url: baseUrl + "auth",
+                method: "POST",
+                data: { code },
                 success(r) {
-                  const {data} = r as any;
-                  console.log('ddd...',data)
-                  if(data.code === 0){
+                  const { data } = r as any;
+                  console.log("ddd...", data);
+                  if (data.code === 0) {
                     (getApp() as any).globalData.userInfo = data.data;
+                    uni.setStorage({
+                      key: "USER_INFO",
+                      data: data.data,
+                    });
                     resolve(data);
-                  }else{
+                  } else {
                     resolve(data);
                   }
                 },
                 fail() {
-                  resolve({code: -1});
+                  resolve({ code: -1 });
                 },
               });
             }
