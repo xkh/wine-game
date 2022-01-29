@@ -2,6 +2,9 @@
     import Vue from 'vue';
     export default Vue.extend({
         mpType: 'app',
+        globalData:{
+            userInfo:null
+        },
         onLaunch() {
             console.log('App Launch')
         },

@@ -53,11 +53,7 @@
           <view class="card-img" v-if="cardTwo">
             <image class="img-two" :src="cardTwoImg"></image>
           </view>
-          <button
-            @tap="getUserProfile"
-            class="get-name-btn"
-            v-if="!myName"
-          >
+          <button @tap="getUserProfile" class="get-name-btn" v-if="!myName">
             参与游戏
           </button>
         </view>
@@ -76,6 +72,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+const baseUrl = "http://127.0.0.1:2001/game/";
 export default Vue.extend({
   data() {
     return {
@@ -99,7 +96,7 @@ export default Vue.extend({
       otherPhoto: "../../static/images/default.jpg",
       otherName: "",
       otherAwayTime: 0, //他人跑的次数
-      uid:"",
+      uid: "",
     };
   },
   computed: {
@@ -127,6 +124,13 @@ export default Vue.extend({
   },
   onLoad() {
     console.log("initPoker...", this.initPoker);
+    this.autoLogin().then(res=>{
+      const {code, data}=res as any;
+      if(code===0){
+        const {openid} = data;
+        console.log('openid...', openid)
+      }
+    })
   },
   methods: {
     getUserProfile() {
@@ -134,9 +138,9 @@ export default Vue.extend({
       uni.getUserProfile({
         desc: "获取您的昵称用于链接其他玩家",
         success(res) {
-          console.log("用户信息获取成功...", res);
-          const { userInfo = {} } = res || {};
-          const { nickName, avatarUrl, signature } = userInfo as any;
+          console.log("用户信息获取成功...", res, that.socketStatus);
+          const { userInfo = {}, signature } = res || {};
+          const { nickName, avatarUrl } = userInfo as any;
           that.uid = signature;
           that.myName = nickName;
           that.myPhoto = avatarUrl;
@@ -150,11 +154,12 @@ export default Vue.extend({
       });
     },
     //初始化
-    initSocket(id='') {
-      if(!id) return;
+    initSocket(id = "") {
+      if (!id) return;
       //创建连接
       uni.connectSocket({
-        url: "wss:api.xonepage.com/game/wss/"+id,
+        // url: "wss:api.xonepage.com/game/wss/"+id,
+        url: "ws://127.0.0.1:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
@@ -314,6 +319,40 @@ export default Vue.extend({
         uni.showToast({ title, icon: "none" });
       }
     },
+    autoLogin() {
+      const that = this;
+      return new Promise((resolve) => {
+        uni.login({
+          async success(res: any) {
+            console.log('rrr...',res)
+            const {code}= res;
+            if (code) {
+              uni.request({
+                url: baseUrl+'auth',
+                method:'POST',
+                data:{code},
+                success(r) {
+                  const {data} = r as any;
+                  console.log('ddd...',data)
+                  if(data.code === 0){
+                    (getApp() as any).globalData.userInfo = data.data;
+                    resolve(data);
+                  }else{
+                    resolve(data);
+                  }
+                },
+                fail() {
+                  resolve({code: -1});
+                },
+              });
+            }
+          },
+          fail() {
+            resolve({ error: true });
+          },
+        } as any);
+      });
+    },
   },
 });
 </script>
@@ -428,13 +467,13 @@ export default Vue.extend({
   bottom: 20rpx;
   left: 20rpx;
 }
-.my-info{
+.my-info {
   display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
 }
-.player-name{
+.player-name {
   height: 30rpx;
   line-height: 30rpx;
   width: 120rpx;
