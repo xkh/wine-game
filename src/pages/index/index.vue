@@ -73,6 +73,7 @@
 <script lang="ts">
 import Vue from "vue";
 const baseUrl = "http://127.0.0.1:2001/game/";
+// const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   data() {
     return {
@@ -158,8 +159,8 @@ export default Vue.extend({
       if (!id) return;
       //创建连接
       uni.connectSocket({
-        // url: "wss:api.xonepage.com/game/wss/"+id,
-        url: "ws://127.0.0.1:2001/game/wss/" + id,
+        url: "wss:api.xonepage.com/game/wss/"+id,
+        // url: "ws://127.0.0.1:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
@@ -206,8 +207,8 @@ export default Vue.extend({
     //发送消息
     sendSocketMessage(msg = {}) {
       const params = {
-        isBegin: false,
-        isShuffle: false,
+        isBegin: this.isBegin,
+        isShuffle: this.isShuffle,
         list: this.initPoker,
         ...msg,
       };
