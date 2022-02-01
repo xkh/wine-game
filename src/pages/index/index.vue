@@ -2,10 +2,13 @@
   <view class="content">
     <view class="player-user one">
       <view class="my-info">
-        <image class="player-img" :src="otherPhoto"></image>
-        <view class="player-name">{{ otherName }}</view>
+        <image class="player-img" :src="otherUserInfo.avatar"></image>
+        <view class="player-name">{{ otherUserInfo.name }}</view>
       </view>
-      <view class="player-away">已逃{{ myAwayTime }}次</view>
+      <view class="player-landing" v-if="!otherId && roomCreated"
+        >等待其他玩家进入房间</view
+      >
+      <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
       <view class="stage-left">
@@ -32,6 +35,29 @@
         <view class="player-btn" @tap="eventGetCard">3分</view>
       </view>
       <view class="stage-right">
+        <!-- 未登录遮罩 -->
+        <view class="stage-no" v-if="!roomCreated">
+          <view class="get-room-num">
+            <input
+              class="room-num"
+              type="number"
+              maxlength="4"
+              placeholder="输入4位房间号创建或加入"
+              @blur="eventNumBlur"
+              :value="roomNum"
+            />
+          </view>
+          <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
+        </view>
+        <!-- 已登录 -->
+        <view class="right-other-card" :class="{'not-open':!isOpen}">
+          <view class="card-img img-one" v-if="cardOne">
+            <image class="card-img-src" :src="cardOneImg" v-show="isOpen"></image>
+          </view>
+          <view class="card-img img-two" v-if="cardTwo">
+            <image class="card-img-src" :src="cardTwoImg" v-show="isOpen"></image>
+          </view>
+        </view>
         <view class="right-all-card">
           <!-- <view class="player-start-list" v-if="pokerList && pokerList.length">
             <view class="poker-item" v-for="(poker, i) in pokerList" :key="i">
@@ -44,35 +70,32 @@
               src="../../static/images/all.jpg"
             ></image>
           </view>
-          <view class="open-msg"></view>
         </view>
         <view class="right-my-card">
-          <view class="card-img" v-if="cardOne">
-            <image class="img-one" :src="cardOneImg"></image>
+          <view class="card-img img-one" v-if="cardOne">
+            <image class="card-img-src" :src="cardOneImg"></image>
           </view>
-          <view class="card-img" v-if="cardTwo">
-            <image class="img-two" :src="cardTwoImg"></image>
+          <view class="card-img img-two" v-if="cardTwo">
+            <image class="card-img-src" :src="cardTwoImg"></image>
           </view>
-          <button @tap="getUserProfile" class="get-name-btn" v-if="!myName">
-            参与游戏
-          </button>
         </view>
       </view>
     </view>
     <view class="player-user two">
       <view class="my-info">
-        <image class="player-img" :src="myPhoto"></image>
-        <view class="player-name">{{ myName }}</view>
+        <image class="player-img" :src="myUserInfo.avatar"></image>
+        <view class="player-name">{{ myUserInfo.name }}</view>
       </view>
-      <view class="player-card">{{ cardTwo }}</view>
-      <view class="player-away">已逃{{ myAwayTime }}次</view>
+      <!-- <view class="player-card">{{ cardTwo }}</view> -->
+      <view class="player-landing" v-if="!roomCreated">未加入房间</view>
+      <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-const baseUrl = "http://127.0.0.1:2001/game/";
+const baseUrl = "http://192.168.31.16:2001/game/";
 // const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   data() {
@@ -88,17 +111,36 @@ export default Vue.extend({
       socketStatus: 0,
       isShuffle: false, //是否已刷牌
       isBegin: false, //是否开局
+      isOpen: false, //是否开牌
       isFirstStatus: 0, //是黑还是红
       cardOne: "",
       cardTwo: "",
-      myPhoto: "../../static/images/default.jpg",
-      myName: "",
+      myUserInfo: {
+        name: "",
+        avatar: "../../static/images/default.jpg",
+      },
+      otherUserInfo: {
+        name: "",
+        avatar: "../../static/images/default.jpg",
+      },
       myAwayTime: 0, //我逃跑的次数
-      otherPhoto: "../../static/images/default.jpg",
-      otherName: "",
       otherAwayTime: 0, //他人跑的次数
-      uid: "",
+      id: "", //用户id
+      otherId: "", //其他玩家id
+      roomNum: "",
+      roomCreated: false,
     };
+  },
+  watch:{
+    otherId:{
+      handler(val){
+        if(val){
+          console.log('有玩家进入了!!!',val);
+          this.getOtherInfo(val)
+        }
+      },
+      immediate: true,
+    }
   },
   computed: {
     initPoker() {
@@ -128,39 +170,122 @@ export default Vue.extend({
     this.autoLogin().then((res) => {
       const { code, data } = res as any;
       if (code === 0) {
-        const { id } = data;
-        console.log("id...", id);
+        const { id, name, avatar } = data;
+        this.id = id;
+        if (name || avatar) {
+          this.myUserInfo = data;
+        }
       }
     });
   },
   methods: {
+    getOtherInfo(otherId=''){
+      const that = this;
+      // getUser
+      uni.request({
+        url: baseUrl + "getUser",
+        method: "POST",
+        data: { id: otherId },
+        success(res: any) {
+          const {success, data} = res.data;
+          if(success){
+            that.otherUserInfo = data;
+          }
+          console.log('ooo...',res)
+        },
+      });
+    },
     getUserProfile() {
       const that = this;
-      uni.getUserProfile({
-        desc: "获取您的昵称用于链接其他玩家",
-        success(res) {
-          console.log("用户信息获取成功...", res, that.socketStatus);
-          const { userInfo = {}, signature } = res || {};
-          const { nickName, avatarUrl } = userInfo as any;
-          that.uid = signature;
-          that.myName = nickName;
-          that.myPhoto = avatarUrl;
-          if (!that.socketStatus) {
-            that.initSocket(signature);
+      const roomNum = this.roomNum;
+      if (!roomNum) {
+        this.toast("请输入正确房间号");
+        return;
+      }
+      const {
+        id = "",
+        name = "",
+        avatar = "",
+      } = (getApp() as any).globalData.userInfo;
+      if (!id) {
+        this.autoLogin().then((res) => {
+          const { code } = res as any;
+          if (code === 0) {
+            this.getUserProfile();
           }
-        },
-        fail() {
-          that.toast("请授权头像、昵称参与游戏~");
+        });
+      } else if (!name && !avatar) {
+        uni.getUserProfile({
+          desc: "获取您的昵称用于链接其他玩家",
+          success(res) {
+            console.log("用户信息获取成功...", res, that.socketStatus);
+            const { userInfo = {} } = res || {};
+            const { nickName, avatarUrl } = userInfo as any;
+            const userData = { id, name: nickName, avatar: avatarUrl };
+            that.myUserInfo = userData;
+            uni.request({
+              url: baseUrl + "updateUser",
+              method: "POST",
+              data: userData,
+            });
+          },
+          fail() {
+            that.toast("请授权头像、昵称参与游戏~");
+          },
+          complete() {
+            if (!id) {
+              that.toast("获取用户信息失败,请稍后重试");
+              that.autoLogin();
+            } else {
+              //addROOM
+              that.postAddRoom(id, roomNum);
+            }
+          },
+        });
+      } else if (name || avatar) {
+        that.postAddRoom(id, roomNum);
+      }
+    },
+    postAddRoom(id = "", room_num = "") {
+      const that: any = this;
+      uni.request({
+        url: baseUrl + "addRoom",
+        method: "POST",
+        data: { id, room_num },
+        success(res: any) {
+          console.log("c_addRoom", res.data, that.socketStatus);
+          const { msg, success, data } = res.data;
+          if (success) {
+            const { player_one_id, player_two_id } = data;
+            const otherId =
+              id === player_one_id ? player_two_id : player_one_id;
+            if(otherId){
+              //todo 加入成功
+              that.otherId = otherId;
+            }
+            uni.setNavigationBarTitle({
+              title: `喷大气${room_num}室`,
+            });
+            that.roomCreated = true;
+            if (!that.socketStatus) {
+              that.initSocket(id);
+            }
+          }
+          if (msg) {
+            that.toast(msg);
+          }
         },
       });
     },
     //初始化
     initSocket(id = "") {
-      if (!id) return;
+      if (!id) {
+        return;
+      }
       //创建连接
       uni.connectSocket({
-        url: "wss:api.xonepage.com/game/wss/" + id,
-        // url: "ws://127.0.0.1:2001/game/wss/" + id,
+        // url: "wss:api.xonepage.com/game/wss/" + id,
+        url: "ws://192.168.31.16:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
@@ -169,9 +294,13 @@ export default Vue.extend({
         this.sendSocketMessage();
       });
       //监听socket 接受服务器的消息
-      uni.onSocketMessage((msg: object) => {
-        const { data } = msg as any;
-        const { isBegin, isShuffle, list } = JSON.parse(data);
+      uni.onSocketMessage((e: object) => {
+        const { data } = e as any;
+        const { fromId, msg } = JSON.parse(data);
+        if(fromId){
+          this.otherId = fromId;
+        }
+        const {isBegin, isShuffle, list} = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
           this.isShuffle = isShuffle;
@@ -180,7 +309,7 @@ export default Vue.extend({
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
-        console.log("websocket监听到消息！！！", msg);
+        console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
       //socket断开后
       uni.onSocketClose((res) => {
@@ -220,7 +349,8 @@ export default Vue.extend({
       if (this.socketStatus === 1) {
         uni.sendSocketMessage({
           data: JSON.stringify({
-            toId: "000",
+            roomNum: this.roomNum,
+            otherId: this.otherId,
             msg: JSON.stringify(params),
           }) as any,
         });
@@ -314,10 +444,12 @@ export default Vue.extend({
       }
     },
     //open card
-    eventOpenCard() {},
-    toast(title = "") {
+    eventOpenCard() {
+      this.isOpen = true;
+    },
+    toast(title = "", time=2000) {
       if (title) {
-        uni.showToast({ title, icon: "none" });
+        uni.showToast({ title, icon: "none", duration:time});
       }
     },
     autoLogin() {
@@ -325,7 +457,6 @@ export default Vue.extend({
       return new Promise((resolve) => {
         uni.login({
           async success(res: any) {
-            console.log("rrr...", res);
             const { code } = res;
             if (code) {
               uni.request({
@@ -334,7 +465,7 @@ export default Vue.extend({
                 data: { code },
                 success(r) {
                   const { data } = r as any;
-                  console.log("ddd...", data);
+                  console.log("用户静默授权...", data);
                   if (data.code === 0) {
                     (getApp() as any).globalData.userInfo = data.data;
                     uni.setStorage({
@@ -358,6 +489,12 @@ export default Vue.extend({
         } as any);
       });
     },
+    eventNumBlur(e: any) {
+      const { value, cursor } = e.detail;
+      if (cursor === 4) {
+        this.roomNum = value;
+      }
+    },
   },
 });
 </script>
@@ -376,6 +513,7 @@ export default Vue.extend({
   height: 150rpx;
   background: #eeeeee;
   width: 100%;
+  align-items: center;
 }
 .player-stage {
   flex: 1 1 auto;
@@ -418,6 +556,33 @@ export default Vue.extend({
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+  position: relative;
+}
+.stage-no {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9;
+}
+.get-room-num {
+  height: 80rpx;
+  width: 420rpx;
+  margin: 0 auto;
+  border: #2fb157 2rpx solid;
+  background: #ffffff;
+  border-radius: 10rpx;
+  margin-top: 700rpx;
+}
+.room-num {
+  height: 60rpx;
+  line-height: 60rpx;
+  margin-top: 10rpx;
+  width: 380rpx;
+  margin-left: 20rpx;
+  border: 0;
 }
 .player-start-list {
   overflow: scroll;
@@ -434,24 +599,44 @@ export default Vue.extend({
   width: 600rpx;
   height: 470rpx;
 }
-.right-my-card {
-  padding-top: 80rpx;
+.right-other-card {
   flex: 1;
-  min-height: 300rpx;
   background: #f5f5f5;
   position: relative;
 }
-.card-img .img-one,
-.card-img .img-two {
+.right-other-card .card-img{
+  border: 2rpx solid #ffffff;
+}
+.right-my-card {
+  flex: 1;
+  background: #f5f5f5;
+  position: relative;
+}
+.card-img{
   position: absolute;
   height: 300rpx;
   width: 210rpx;
 }
-.card-img .img-one {
+.right-my-card .card-img{
+  bottom: 0;
+}
+.card-img .card-img-src{
+  height: 300rpx;
+  width: 210rpx;
+}
+.not-open .card-img{
+  background: #999999;
+}
+.card-img.img-one,
+.card-img.img-two {
+  height: 300rpx;
+  width: 210rpx;
+}
+.card-img.img-one {
   left: 50rpx;
   z-index: 1;
 }
-.card-img .img-two {
+.card-img.img-two {
   left: 130rpx;
   z-index: 2;
 }
@@ -474,13 +659,14 @@ export default Vue.extend({
 }
 .my-info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
+  align-items: center;
   text-align: center;
 }
 .player-name {
-  height: 30rpx;
-  line-height: 30rpx;
+  height: 40rpx;
+  line-height: 40rpx;
   width: 120rpx;
   overflow: hidden;
   white-space: nowrap;
@@ -492,17 +678,15 @@ export default Vue.extend({
 }
 
 .get-name-btn {
-  height: 120rpx;
-  line-height: 120rpx;
-  width: 180rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  width: 420rpx;
   background: #2fb157;
   border-radius: 10rpx;
-  margin: 15rpx 0 0 15rpx;
   text-align: center;
   color: #ffffff;
   font-weight: bold;
   font-size: 30rpx;
-  margin-left: 200rpx;
-  margin-top: 120rpx;
+  margin: 40rpx auto;
 }
 </style>
