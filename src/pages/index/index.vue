@@ -7,6 +7,7 @@
       </view>
       <view class="player-landing" v-if="!otherId && roomCreated">等待其他玩家进入房间</view>
       <view class="player-landing" v-if="otherFirst">先手</view>
+      <view class="player-landing" v-if="otherWin">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
@@ -98,6 +99,7 @@
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
       <view class="player-landing" v-if="myFirst">先手</view>
+      <view class="player-landing" v-if="myWin">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -141,6 +143,8 @@ export default Vue.extend({
       otherId: "", //其他玩家id
       roomNum: "",
       roomCreated: false,
+      myWin: false,
+      otherWin: false,
     };
   },
   watch: {
@@ -153,6 +157,11 @@ export default Vue.extend({
       },
       immediate: true,
     },
+    isOpen(val){
+      if(val===false){
+        this.myCard = [];
+      }
+    }
   },
   computed: {
     initPoker() {
@@ -314,6 +323,7 @@ export default Vue.extend({
           myCard: otherCard,
           isOpen,
           myFirst: otherFirst,
+          myWin: otherWin,
         } = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
@@ -322,9 +332,13 @@ export default Vue.extend({
           this.isOpen = isOpen;
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
+          this.otherWin = otherWin;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
+        }
+        if(isOpen){
+          this.openCardModal(!otherWin);
         }
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
@@ -442,13 +456,15 @@ export default Vue.extend({
         }
       }else{
         //后手逻辑
-        if(this.myCard.length===this.otherCard.length){
+        if(this.myCard.length===this.otherCard.length && this.myCard.length!==2){
           this.toast('等对手摸牌');
           return;
         }
       }
       if (this.myCard.length === 2) {
-        this.myCard = [];
+        if(!this.isOpen){
+          this.toast("待开牌");
+        }
         return;
       }
       const pokerList = this.pokerList;
@@ -484,7 +500,24 @@ export default Vue.extend({
     //open card
     eventOpenCard() {
       this.isOpen = true;
-      this.sendSocketMessage({ isOpen: true });
+      const myWin = true;
+      this.openCardModal(myWin);
+     
+      this.sendSocketMessage({ isOpen: true, myWin });
+    },
+    openCardModal(win:Boolean){
+      const that = this;
+       uni.showModal({
+            title: (win?'我方':'对方')+'赢',
+            showCancel:false,
+            confirmText:'下一把',
+            success(){
+              that.myCard = [];
+              that.isOpen = false;
+              that.myFirst = !win;
+              that.sendSocketMessage()
+            }
+          })
     },
     toast(title = "", time = 2000) {
       if (title) {
