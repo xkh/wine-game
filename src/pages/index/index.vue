@@ -57,14 +57,14 @@
             <image
               class="card-img-src"
               :src="getCardImg(otherCardOne)"
-              v-show="isOpen"
+              v-if="isOpen"
             ></image>
           </view>
           <view class="card-img img-two" v-if="otherCardTwo">
             <image
               class="card-img-src"
               :src="getCardImg(otherCardTwo)"
-              v-show="isOpen"
+              v-if="isOpen"
             ></image>
           </view>
         </view>
@@ -363,6 +363,9 @@ export default Vue.extend({
       const params = {
         isBegin: this.isBegin,
         isShuffle: this.isShuffle,
+        isOpen: this.isOpen,
+        cardOne: this.cardOne,
+        cardTwo: this.cardTwo,
         list: this.initPoker,
         ...msg,
       };
