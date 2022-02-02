@@ -9,7 +9,7 @@
         >等待其他玩家进入房间</view
       >
       <view class="player-landing" v-if="otherFirst">先手</view>
-      <view class="player-landing" v-if="otherWin">赢！！！</view>
+      <view class="player-landing" v-if="otherWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
@@ -101,7 +101,7 @@
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
       <view class="player-landing" v-if="myFirst">先手</view>
-      <view class="player-landing" v-if="myWin">赢！！！</view>
+      <view class="player-landing" v-if="myWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -377,7 +377,7 @@ export default Vue.extend({
         myCard: this.myCard,
         myFirst: this.myFirst,
         myWin: this.myWin,
-        list: this.initPoker,
+        list: this.pokerList.length?this.pokerList:this.initPoker,
         ...msg,
       };
       console.log("this.socketStatus...", this.socketStatus, params);
