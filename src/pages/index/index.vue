@@ -519,6 +519,7 @@ export default Vue.extend({
         this.myWin = myWin;
         this.otherWin = !myWin;
         this.myFirst = !myWin;
+        this.otherFirst = myWin;
         this.sendSocketMessage();
         this.openCardModal(myWin);
       }
@@ -665,6 +666,7 @@ export default Vue.extend({
         confirmText: "下一把",
         success() {
           that.myFirst = !win;
+          that.otherFirst = !!win;
           if (that.isOpen) {
             that.myCard = [];
             that.otherCard = [];
