@@ -8,7 +8,7 @@
       <view class="player-landing" v-if="!otherId && roomCreated"
         >等待其他玩家进入房间</view
       >
-      <view class="player-landing" v-if="otherFirst">先手</view>
+      <view class="player-landing" v-if="otherFirst && !isOpen">先手</view>
       <view class="player-landing" v-if="otherWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
@@ -100,8 +100,8 @@
       </view>
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
-      <view class="player-landing" v-if="myFirst">先手</view>
       <view class="player-landing" v-if="myWin && isOpen">赢！！！</view>
+      <view class="player-landing" v-if="myFirst && !isOpen">先手</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -517,8 +517,10 @@ export default Vue.extend({
         this.isOpen = true;
         const myWin: any = this.checkMyWin();
         this.myWin = myWin;
-        this.openCardModal(myWin);
+        this.otherWin = !myWin;
+        this.myFirst = !myWin;
         this.sendSocketMessage();
+        this.openCardModal(myWin);
       }
     },
     checkMyWin() {
@@ -527,7 +529,6 @@ export default Vue.extend({
       //   heart: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //红心
       //   club: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //梅花
       //   diamond: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //方块
-      //   joker: [3, 6], //大小王
       // },
       // this.myCard = ["heart_11", "diamond_3"] as any;
       // this.otherCard = ["spade_2", "diamond_2"] as any;
@@ -538,8 +539,6 @@ export default Vue.extend({
       const o2: any = (this.otherCard[1] as string).split("_");
       const myCardInfo = this.getCardValue(m1, m2);
       const otherCardInfo = this.getCardValue(o1, o2);
-      console.log("111...", myCardInfo);
-      console.log("222...", otherCardInfo);
       if (myCardInfo.isPair || otherCardInfo.isPair) {
         if (myCardInfo.isPair && otherCardInfo.isPair) {
           //都是对
@@ -665,13 +664,13 @@ export default Vue.extend({
         showCancel: false,
         confirmText: "下一把",
         success() {
+          that.myFirst = !win;
           if (that.isOpen) {
             that.myCard = [];
             that.otherCard = [];
             that.isOpen = false;
             that.sendSocketMessage();
           }
-          that.myFirst = !win;
         },
       });
     },
