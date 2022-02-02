@@ -528,9 +528,9 @@ export default Vue.extend({
       //   diamond: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //方块
       //   joker: [3, 6], //大小王
       // },
-      this.myCard = ["heart_11", "diamond_3"] as any;
-      this.otherCard = ["spade_2", "diamond_2"] as any;
-      this.isOpen = true;
+      // this.myCard = ["heart_11", "diamond_3"] as any;
+      // this.otherCard = ["spade_2", "diamond_2"] as any;
+      // this.isOpen = true;
       const m1: any = (this.myCard[0] as string).split("_");
       const m2: any = (this.myCard[1] as string).split("_");
       const o1: any = (this.otherCard[0] as string).split("_");
