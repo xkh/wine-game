@@ -5,9 +5,8 @@
         <image class="player-img" :src="otherUserInfo.avatar"></image>
         <view class="player-name">{{ otherUserInfo.name }}</view>
       </view>
-      <view class="player-landing" v-if="!otherId && roomCreated"
-        >等待其他玩家进入房间</view
-      >
+      <view class="player-landing" v-if="!otherId && roomCreated">等待其他玩家进入房间</view>
+      <view class="player-landing" v-if="otherFirst">先手</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
@@ -98,6 +97,7 @@
       </view>
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
+      <view class="player-landing" v-if="myFirst">先手</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -123,6 +123,8 @@ export default Vue.extend({
       isBegin: false, //是否开局
       isOpen: false, //是否开牌
       isFirstStatus: 0, //是黑还是红
+      myFirst: false,//先手
+      otherFirst: false,//先手
       cardOne: "",
       cardTwo: "",
       otherCardOne: "",
@@ -322,6 +324,7 @@ export default Vue.extend({
           cardOne: otherCardOne,
           cardTwo: otherCardTwo,
           isOpen,
+          myFirst: otherFirst,
         } = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
@@ -330,6 +333,7 @@ export default Vue.extend({
           this.isOpen = isOpen;
           this.otherCardOne = otherCardOne;
           this.otherCardTwo = otherCardTwo;
+          this.otherFirst = otherFirst;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
@@ -366,6 +370,7 @@ export default Vue.extend({
         isOpen: this.isOpen,
         cardOne: this.cardOne,
         cardTwo: this.cardTwo,
+        myFirst: this.myFirst,
         list: this.initPoker,
         ...msg,
       };
@@ -438,6 +443,10 @@ export default Vue.extend({
         this.toast("请点击开局");
         return;
       }
+      if(!this.cardOne && !this.cardTwo && !this.otherCardOne && !this.otherCardTwo){
+        this.myFirst = true;
+        //先手
+      }
       if (this.cardOne && this.cardTwo) {
         this.cardOne = "";
         this.cardTwo = "";
@@ -453,8 +462,6 @@ export default Vue.extend({
       const newList = pokerList.slice(1, 55);
       this.pokerList = newList;
       this.sendSocketMessage({
-        cardOne: this.cardOne,
-        cardTwo: this.cardTwo,
         list: newList,
       });
       console.log("card...", card, newList);
