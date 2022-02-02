@@ -9,7 +9,7 @@
         >等待其他玩家进入房间</view
       >
       <view class="player-landing" v-if="otherFirst && !isOpen">先手</view>
-      <view class="player-landing" v-if="otherWin && isOpen">赢！！！</view>
+      <view class="player-landing win" v-if="otherWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
@@ -45,8 +45,8 @@
           {{ isFirstStatus === 2 ? "红" : "" }}
         </view>
         <view class="player-btn over" @tap="eventOver">结束</view>
-        <view class="player-btn gap" @tap="eventGetCard">{{isOpen?'下一把':'摸牌'}}</view>
-        <view class="player-btn" @tap="eventOpenCard">开牌</view>
+        <view class="player-btn gap" :class="{ 'begin': isOpen }" @tap="eventGetCard">摸牌</view>
+        <view class="player-btn" @tap="eventOpenCard">{{isOpen?'收牌':'开牌'}}</view>
         <view class="player-btn" @tap="eventRunAway">逃跑</view>
         <!-- <view class="player-btn" @tap="eventGetCard">1分</view>
         <view class="player-btn" @tap="eventGetCard">2分</view>
@@ -100,7 +100,7 @@
       </view>
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
-      <view class="player-landing" v-if="myWin && isOpen">赢！！！</view>
+      <view class="player-landing win" v-if="myWin && isOpen">赢！！！</view>
       <view class="player-landing" v-if="myFirst && !isOpen">先手</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
@@ -456,12 +456,6 @@ export default Vue.extend({
         return;
       }
       if (this.isOpen) {
-        this.myCard = [];
-        this.otherCard = [];
-        this.isOpen = false;
-        this.myFirst = !this.myWin;
-        this.otherFirst = !!this.myWin;
-        this.sendSocketMessage();
         return;
       }
       if (!this.myCard.length && !this.otherCard.length) {
@@ -525,6 +519,15 @@ export default Vue.extend({
     },
     //open card
     eventOpenCard() {
+      if(this.isOpen){
+        this.myCard = [];
+        this.otherCard = [];
+        this.isOpen = false;
+        this.myFirst = !this.myWin;
+        this.otherFirst = !!this.myWin;
+        this.sendSocketMessage();
+        return;
+      }
       if (this.myCard.length === 2 && this.otherCard.length === 2) {
         this.isOpen = true;
         const myWin: any = this.checkMyWin();
@@ -936,5 +939,9 @@ export default Vue.extend({
   font-weight: bold;
   font-size: 30rpx;
   margin-top: 40rpx;
+}
+
+.player-landing.win{
+  color: #f54551;
 }
 </style>
