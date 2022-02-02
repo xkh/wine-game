@@ -162,6 +162,7 @@ export default Vue.extend({
     isOpen(val) {
       if (val === false) {
         this.myCard = [];
+        this.otherCard = [];
       }
     },
   },
@@ -343,8 +344,8 @@ export default Vue.extend({
           this.startSaveLocal(JSON.parse(data));
         }
         if (!isOpen) {
-          this.myCard = [];
-          this.otherCard = [];
+          // this.myCard = [];
+          // this.otherCard = [];
           // this.sendSocketMessage();
         }
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
