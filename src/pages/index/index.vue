@@ -514,7 +514,7 @@ export default Vue.extend({
     eventOpenCard() {
       if (this.myCard.length === 2 && this.otherCard.length === 2) {
         this.isOpen = true;
-        const myWin:any = this.checkMyWin();
+        const myWin: any = this.checkMyWin();
         this.myWin = myWin;
         this.openCardModal(myWin);
         this.sendSocketMessage();
@@ -660,17 +660,17 @@ export default Vue.extend({
     openCardModal(win: Boolean) {
       const that = this;
       uni.showModal({
-        title: "已开牌"+(win ? "我方" : "对方") + "赢",
+        title: "已开牌" + (win ? "我方" : "对方") + "赢",
         showCancel: false,
         confirmText: "下一把",
         success() {
-          if(that.isOpen){
+          if (that.isOpen) {
             that.myCard = [];
-          that.otherCard = [];
-          that.isOpen = false;
-          that.myFirst = !win;
-          that.sendSocketMessage();
+            that.otherCard = [];
+            that.isOpen = false;
+            that.sendSocketMessage();
           }
+          that.myFirst = !win;
         },
       });
     },
