@@ -12,8 +12,8 @@
     </view>
     <view class="player-stage">
       <!-- 未登录遮罩 -->
-        <view class="stage-no" v-if="!roomCreated">
-          <view class="stage-form">
+      <view class="stage-no" v-if="!roomCreated">
+        <view class="stage-form">
           <view class="get-room-num">
             <input
               class="room-num"
@@ -25,8 +25,8 @@
             />
           </view>
           <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
-          </view>
         </view>
+      </view>
       <view class="stage-left">
         <view
           class="player-btn"
@@ -52,12 +52,20 @@
       </view>
       <view class="stage-right">
         <!-- 已登录 -->
-        <view class="right-other-card" :class="{'not-open':!isOpen}">
+        <view class="right-other-card" :class="{ 'not-open': !isOpen }">
           <view class="card-img img-one" v-if="otherCardOne">
-            <image class="card-img-src" :src="getCardImg(otherCardOne)" v-show="isOpen"></image>
+            <image
+              class="card-img-src"
+              :src="getCardImg(otherCardOne)"
+              v-show="isOpen"
+            ></image>
           </view>
           <view class="card-img img-two" v-if="otherCardTwo">
-            <image class="card-img-src" :src="getCardImg(otherCardTwo)" v-show="isOpen"></image>
+            <image
+              class="card-img-src"
+              :src="getCardImg(otherCardTwo)"
+              v-show="isOpen"
+            ></image>
           </view>
         </view>
         <view class="right-all-card">
@@ -135,16 +143,16 @@ export default Vue.extend({
       roomCreated: false,
     };
   },
-  watch:{
-    otherId:{
-      handler(val){
-        if(val){
-          console.log('有玩家进入了!!!',val);
-          this.getOtherInfo(val)
+  watch: {
+    otherId: {
+      handler(val) {
+        if (val) {
+          console.log("有玩家进入了!!!", val);
+          this.getOtherInfo(val);
         }
       },
       immediate: true,
-    }
+    },
   },
   computed: {
     initPoker() {
@@ -183,10 +191,10 @@ export default Vue.extend({
     });
   },
   methods: {
-    getCardImg(cardName=''){
+    getCardImg(cardName = "") {
       return cardName ? `../../static/images/${cardName}.jpg` : "";
     },
-    getOtherInfo(otherId=''){
+    getOtherInfo(otherId = "") {
       const that = this;
       // getUser
       uni.request({
@@ -194,11 +202,11 @@ export default Vue.extend({
         method: "POST",
         data: { id: otherId },
         success(res: any) {
-          const {success, data} = res.data;
-          if(success){
+          const { success, data } = res.data;
+          if (success) {
             that.otherUserInfo = data;
           }
-          console.log('ooo...',res)
+          console.log("ooo...", res);
         },
       });
     },
@@ -266,7 +274,7 @@ export default Vue.extend({
             const { player_one_id, player_two_id } = data;
             const otherId =
               id === player_one_id ? player_two_id : player_one_id;
-            if(otherId){
+            if (otherId) {
               //todo 加入成功
               that.otherId = otherId;
             }
@@ -304,20 +312,28 @@ export default Vue.extend({
       uni.onSocketMessage((e: object) => {
         const { data } = e as any;
         const { fromId, msg } = JSON.parse(data);
-        if(fromId){
+        if (fromId) {
           this.otherId = fromId;
         }
-        const {isBegin, isShuffle, list, cardOne: otherCardOne, cardTwo: otherCardTwo} = JSON.parse(msg);
+        const {
+          isBegin,
+          isShuffle,
+          list,
+          cardOne: otherCardOne,
+          cardTwo: otherCardTwo,
+          isOpen,
+        } = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
           this.isShuffle = isShuffle;
           this.isBegin = isBegin;
+          this.isOpen = isOpen;
+          this.otherCardOne = otherCardOne;
+          this.otherCardTwo = otherCardTwo;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
-        this.otherCardOne = otherCardOne;
-        this.otherCardTwo = otherCardTwo;
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
       //socket断开后
@@ -433,7 +449,11 @@ export default Vue.extend({
       }
       const newList = pokerList.slice(1, 55);
       this.pokerList = newList;
-      this.sendSocketMessage({ cardOne:this.cardOne,cardTwo:this.cardTwo, list: newList });
+      this.sendSocketMessage({
+        cardOne: this.cardOne,
+        cardTwo: this.cardTwo,
+        list: newList,
+      });
       console.log("card...", card, newList);
     },
     //黑红
@@ -455,10 +475,11 @@ export default Vue.extend({
     //open card
     eventOpenCard() {
       this.isOpen = true;
+      this.sendSocketMessage({ isOpen: true });
     },
-    toast(title = "", time=2000) {
+    toast(title = "", time = 2000) {
       if (title) {
-        uni.showToast({ title, icon: "none", duration:time});
+        uni.showToast({ title, icon: "none", duration: time });
       }
     },
     autoLogin() {
@@ -577,7 +598,7 @@ export default Vue.extend({
   background: rgba(255, 255, 255, 0.44);
   z-index: 9;
 }
-.stage-form{
+.stage-form {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -619,7 +640,7 @@ export default Vue.extend({
   background: #f5f5f5;
   position: relative;
 }
-.right-other-card .card-img{
+.right-other-card .card-img {
   border: 2rpx solid #ffffff;
 }
 .right-my-card {
@@ -627,19 +648,19 @@ export default Vue.extend({
   background: #f5f5f5;
   position: relative;
 }
-.card-img{
+.card-img {
   position: absolute;
   height: 300rpx;
   width: 210rpx;
 }
-.right-my-card .card-img{
+.right-my-card .card-img {
   bottom: 0;
 }
-.card-img .card-img-src{
+.card-img .card-img-src {
   height: 300rpx;
   width: 210rpx;
 }
-.not-open .card-img{
+.not-open .card-img {
   background: #999999;
 }
 .card-img.img-one,
