@@ -336,6 +336,7 @@ export default Vue.extend({
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
           this.otherWin = otherWin;
+          this.myWin = !otherWin
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
