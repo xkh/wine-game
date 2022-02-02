@@ -13,6 +13,7 @@
     <view class="player-stage">
       <!-- 未登录遮罩 -->
         <view class="stage-no" v-if="!roomCreated">
+          <view class="stage-form">
           <view class="get-room-num">
             <input
               class="room-num"
@@ -24,6 +25,7 @@
             />
           </view>
           <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
+          </view>
         </view>
       <view class="stage-left">
         <view
@@ -506,6 +508,7 @@ export default Vue.extend({
   align-items: center;
   justify-content: center;
   height: 100vh;
+  overflow: hidden;
 }
 .player-user {
   flex: 0 0 auto;
@@ -567,6 +570,12 @@ export default Vue.extend({
   background: rgba(255, 255, 255, 0.44);
   z-index: 9;
 }
+.stage-form{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .get-room-num {
   height: 80rpx;
   width: 420rpx;
@@ -574,7 +583,6 @@ export default Vue.extend({
   border: #2fb157 2rpx solid;
   background: #ffffff;
   border-radius: 10rpx;
-  margin-top: 50%;
 }
 .room-num {
   height: 60rpx;
@@ -687,6 +695,6 @@ export default Vue.extend({
   color: #ffffff;
   font-weight: bold;
   font-size: 30rpx;
-  margin: 40rpx auto;
+  margin-top: 40rpx;
 }
 </style>
