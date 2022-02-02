@@ -32,25 +32,25 @@
       <view class="stage-left">
         <view
           class="player-btn"
-          :class="{ begin: isBegin }"
+          :class="{ 'begin': isBegin }"
           @tap="eventShuffle"
           >{{ isBegin ? "禁止洗" : isShuffle ? "再洗洗" : "洗一洗" }}</view
         >
-        <view class="player-btn" @tap="eventStart">{{
+        <view class="player-btn" :class="{ 'begin': isBegin }" @tap="eventStart">{{
           isBegin ? "已开局" : "开局"
         }}</view>
         <view class="player-btn" @tap="eventWhoFirst">
-          {{ isFirstStatus === 0 ? "黑/红" : "" }}
+          {{ isFirstStatus === 0 ? "扳花色" : "" }}
           {{ isFirstStatus === 1 ? "黑" : "" }}
           {{ isFirstStatus === 2 ? "红" : "" }}
         </view>
         <view class="player-btn over" @tap="eventOver">结束</view>
-        <view class="player-btn gap" @tap="eventGetCard">摸牌</view>
+        <view class="player-btn gap" @tap="eventGetCard">{{isOpen?'下一把':'摸牌'}}</view>
         <view class="player-btn" @tap="eventOpenCard">开牌</view>
         <view class="player-btn" @tap="eventRunAway">逃跑</view>
-        <view class="player-btn" @tap="eventGetCard">1分</view>
+        <!-- <view class="player-btn" @tap="eventGetCard">1分</view>
         <view class="player-btn" @tap="eventGetCard">2分</view>
-        <view class="player-btn" @tap="eventGetCard">3分</view>
+        <view class="player-btn" @tap="eventGetCard">3分</view> -->
       </view>
       <view class="stage-right">
         <!-- 已登录 -->
@@ -323,6 +323,7 @@ export default Vue.extend({
         const {
           isBegin,
           isShuffle,
+          isFirstStatus,
           list,
           myCard: otherCard,
           isOpen,
@@ -339,6 +340,7 @@ export default Vue.extend({
           this.myWin = !otherWin;
           this.myFirst = !otherFirst;
           this.isOpen = isOpen;
+          this.isFirstStatus = isFirstStatus;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
@@ -381,6 +383,7 @@ export default Vue.extend({
         myCard: this.myCard,
         myFirst: this.myFirst,
         myWin: this.myWin,
+        isFirstStatus: this.isFirstStatus,
         list: this.pokerList.length ? this.pokerList : this.initPoker,
         ...msg,
       };
@@ -511,6 +514,7 @@ export default Vue.extend({
       } else {
         this.isFirstStatus = Math.random() > 0.5 ? 1 : 2;
       }
+      this.sendSocketMessage();
     },
     //run away
     eventRunAway() {
@@ -529,7 +533,8 @@ export default Vue.extend({
         this.myFirst = !myWin;
         this.otherFirst = myWin;
         this.sendSocketMessage();
-        // this.openCardModal(myWin);
+      }else{
+        this.toast('未达到开牌条件！')
       }
     },
     checkMyWin() {
