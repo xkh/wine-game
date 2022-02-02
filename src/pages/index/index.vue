@@ -5,7 +5,9 @@
         <image class="player-img" :src="otherUserInfo.avatar"></image>
         <view class="player-name">{{ otherUserInfo.name }}</view>
       </view>
-      <view class="player-landing" v-if="!otherId && roomCreated">等待其他玩家进入房间</view>
+      <view class="player-landing" v-if="!otherId && roomCreated"
+        >等待其他玩家进入房间</view
+      >
       <view class="player-landing" v-if="otherFirst">先手</view>
       <view class="player-landing" v-if="otherWin">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
@@ -125,10 +127,10 @@ export default Vue.extend({
       isBegin: false, //是否开局
       isOpen: false, //是否开牌
       isFirstStatus: 0, //是黑还是红
-      myFirst: false,//先手
-      otherFirst: false,//先手
-      myCard:[],//我摸的
-      otherCard:[],//他摸的
+      myFirst: false, //先手
+      otherFirst: false, //先手
+      myCard: [], //我摸的
+      otherCard: [], //他摸的
       myUserInfo: {
         name: "",
         avatar: "../../static/images/default.jpg",
@@ -157,11 +159,11 @@ export default Vue.extend({
       },
       immediate: true,
     },
-    isOpen(val){
-      if(val===false){
+    isOpen(val) {
+      if (val === false) {
         this.myCard = [];
       }
-    }
+    },
   },
   computed: {
     initPoker() {
@@ -180,6 +182,7 @@ export default Vue.extend({
   },
   onLoad() {
     console.log("initPoker...", this.initPoker);
+    // this.checkMyWin();
     this.autoLogin().then((res) => {
       const { code, data } = res as any;
       if (code === 0) {
@@ -337,7 +340,7 @@ export default Vue.extend({
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
-        if(isOpen){
+        if (isOpen) {
           this.openCardModal(!otherWin);
         }
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
@@ -372,6 +375,7 @@ export default Vue.extend({
         isOpen: this.isOpen,
         myCard: this.myCard,
         myFirst: this.myFirst,
+        myWin: this.myWin,
         list: this.initPoker,
         ...msg,
       };
@@ -443,39 +447,42 @@ export default Vue.extend({
         this.toast("请点击开局");
         return;
       }
-      if(!this.myCard.length && !this.otherCard.length){
-        if(this.otherFirst){
-          this.toast('对手先摸');
+      if (!this.myCard.length && !this.otherCard.length) {
+        if (this.otherFirst) {
+          this.toast("对手先摸");
           return;
         }
-        if(!this.myFirst && !this.otherFirst){
+        if (!this.myFirst && !this.otherFirst) {
           this.myFirst = true;
           //先手
         }
       }
-      
-      if(this.myFirst){
+
+      if (this.myFirst) {
         //先手逻辑
-        if(this.myCard.length > this.otherCard.length){
-          this.toast('等对手摸牌');
+        if (this.myCard.length > this.otherCard.length) {
+          this.toast("等对手摸牌");
           return;
         }
-      }else{
+      } else {
         //后手逻辑
-        if(this.myCard.length===this.otherCard.length && this.myCard.length!==2){
-          this.toast('等对手摸牌');
+        if (
+          this.myCard.length === this.otherCard.length &&
+          this.myCard.length !== 2
+        ) {
+          this.toast("等对手摸牌");
           return;
         }
       }
       if (this.myCard.length === 2) {
-        if(!this.isOpen){
+        if (!this.isOpen) {
           this.toast("待开牌");
         }
         return;
       }
       const pokerList = this.pokerList;
       const card = pokerList[0];
-      this.myCard.push(card)
+      this.myCard.push(card);
       // if (!this.cardOne) {
       //   this.cardOne = card;
       // } else if (!this.cardTwo) {
@@ -498,33 +505,172 @@ export default Vue.extend({
     },
     //run away
     eventRunAway() {
-      if (this.myCard.length===2) {
+      if (this.myCard.length === 2) {
         this.myCard = [];
         this.myAwayTime++;
       }
     },
     //open card
     eventOpenCard() {
-      this.isOpen = true;
-      const myWin = true;
-      this.myWin = myWin;
-      this.openCardModal(myWin);
-      this.sendSocketMessage({ myWin });
+      if (this.myCard.length === 2 && this.otherCard.length === 2) {
+        this.isOpen = true;
+        const myWin:any = this.checkMyWin();
+        this.myWin = myWin;
+        this.openCardModal(myWin);
+        this.sendSocketMessage();
+      }
     },
-    openCardModal(win:Boolean){
-      const that = this;
-       uni.showModal({
-            title: (win?'我方':'对方')+'赢',
-            showCancel:false,
-            confirmText:'下一把',
-            success(){
-              that.myCard = [];
-              that.otherCard = [];
-              that.isOpen = false;
-              that.myFirst = !win;
-              that.sendSocketMessage()
+    checkMyWin() {
+      //  {
+      //   spade: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //黑桃
+      //   heart: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //红心
+      //   club: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //梅花
+      //   diamond: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //方块
+      //   joker: [3, 6], //大小王
+      // },
+      this.myCard = ["heart_11", "diamond_3"] as any;
+      this.otherCard = ["spade_2", "diamond_2"] as any;
+      this.isOpen = true;
+      const m1: any = (this.myCard[0] as string).split("_");
+      const m2: any = (this.myCard[1] as string).split("_");
+      const o1: any = (this.otherCard[0] as string).split("_");
+      const o2: any = (this.otherCard[1] as string).split("_");
+      const myCardInfo = this.getCardValue(m1, m2);
+      const otherCardInfo = this.getCardValue(o1, o2);
+      console.log("111...", myCardInfo);
+      console.log("222...", otherCardInfo);
+      if (myCardInfo.isPair || otherCardInfo.isPair) {
+        if (myCardInfo.isPair && otherCardInfo.isPair) {
+          //都是对
+          if (myCardInfo.realNum === otherCardInfo.realNum) {
+            if (myCardInfo.maxNum === otherCardInfo.maxNum) {
+              return myCardInfo.maxNumColor === "spade";
+            } else {
+              return myCardInfo.maxNum > otherCardInfo.maxNum;
             }
-          })
+          } else {
+            return myCardInfo.realNum > otherCardInfo.realNum;
+          }
+        } else if (myCardInfo.isPair) {
+          //我的是对
+          return otherCardInfo.realNum !== 0;
+        } else if (otherCardInfo.isPair) {
+          //他的是对
+          return myCardInfo.realNum === 0;
+        }
+      } else {
+        //无对情况
+        if (myCardInfo.realNum === otherCardInfo.realNum) {
+          if (myCardInfo.maxNum === otherCardInfo.maxNum) {
+            return myCardInfo.maxNumColor === "spade";
+          } else {
+            return myCardInfo.maxNum > otherCardInfo.maxNum;
+          }
+        } else {
+          return myCardInfo.realNum > otherCardInfo.realNum;
+        }
+      }
+    },
+    getCardValue(v1 = [], v2 = []) {
+      let sumNum = 0;
+      let realNum = 0;
+      let maxNum = 0;
+      let maxNumColor = "";
+      let isPair = false;
+      const color1 = v1[0];
+      const color2 = v2[0];
+      const num1 = Number(v1[1]);
+      const num2 = Number(v2[1]);
+      if (color1 === "joker" || color2 === "joker") {
+        maxNumColor = "joker";
+        if (color1 === "joker" && color2 === "joker") {
+          //两张都是王
+          maxNum = 16;
+          sumNum = num1 + num2;
+        } else if (color1 === "joker") {
+          //第一张是王
+          if (num1 === 3) {
+            maxNum = 14;
+            if (color2 === "spade" || color2 === "club") {
+              sumNum = num2;
+              isPair = true;
+            } else {
+              sumNum = num1 + num2;
+            }
+          }
+          if (num1 === 6) {
+            maxNum = 15;
+            if (color2 === "heart" || color2 === "diamond") {
+              sumNum = num2;
+              isPair = true;
+            } else {
+              sumNum = num1 + num2;
+            }
+          }
+        } else if (color2 === "joker") {
+          //第二张是王
+          if (num2 === 3) {
+            maxNum = 14;
+            if (color1 === "spade" || color1 === "club") {
+              sumNum = num1;
+              isPair = true;
+            } else {
+              sumNum = num1 + num2;
+            }
+          }
+          if (num2 === 6) {
+            maxNum = 15;
+            if (color1 === "heart" || color1 === "diamond") {
+              sumNum = num1;
+              isPair = true;
+            } else {
+              sumNum = num1 + num2;
+            }
+          }
+        }
+      } else {
+        //没大小王
+        if (([color1, color2] as any).includes("spade")) {
+          maxNumColor = "spade";
+        } else if (([color1, color2] as any).includes("heart")) {
+          maxNumColor = "heart";
+        } else if (([color1, color2] as any).includes("club")) {
+          maxNumColor = "club";
+        } else {
+          maxNumColor = "diamond";
+        }
+        maxNum = Math.max(num1, num2);
+        if (
+          num1 === num2 &&
+          ((["spade", "club"].includes(color1) &&
+            ["spade", "club"].includes(color2)) ||
+            (["heart", "diamond"].includes(color1) &&
+              ["heart", "diamond"].includes(color2)))
+        ) {
+          //对子
+          sumNum = num1;
+          isPair = true;
+        } else {
+          sumNum = num1 + num2;
+        }
+      }
+      realNum = sumNum % 10;
+      return { isPair, realNum, maxNum, maxNumColor, sumNum };
+    },
+    openCardModal(win: Boolean) {
+      const that = this;
+      uni.showModal({
+        title: (win ? "我方" : "对方") + "赢",
+        showCancel: false,
+        confirmText: "下一把",
+        success() {
+          that.myCard = [];
+          that.otherCard = [];
+          that.isOpen = false;
+          that.myFirst = !win;
+          that.sendSocketMessage();
+        },
+      });
     },
     toast(title = "", time = 2000) {
       if (title) {
