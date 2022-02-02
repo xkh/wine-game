@@ -660,15 +660,17 @@ export default Vue.extend({
     openCardModal(win: Boolean) {
       const that = this;
       uni.showModal({
-        title: (win ? "我方" : "对方") + "赢",
+        title: "已开牌"+(win ? "我方" : "对方") + "赢",
         showCancel: false,
         confirmText: "下一把",
         success() {
-          that.myCard = [];
+          if(that.isOpen){
+            that.myCard = [];
           that.otherCard = [];
           that.isOpen = false;
           that.myFirst = !win;
           that.sendSocketMessage();
+          }
         },
       });
     },
