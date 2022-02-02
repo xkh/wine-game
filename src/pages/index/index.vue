@@ -52,17 +52,17 @@
       <view class="stage-right">
         <!-- 已登录 -->
         <view class="right-other-card" :class="{ 'not-open': !isOpen }">
-          <view class="card-img img-one" v-if="otherCardOne">
+          <view class="card-img img-one" v-if="otherCard[0]">
             <image
               class="card-img-src"
-              :src="getCardImg(otherCardOne)"
+              :src="getCardImg(otherCard[0])"
               v-if="isOpen"
             ></image>
           </view>
-          <view class="card-img img-two" v-if="otherCardTwo">
+          <view class="card-img img-two" v-if="otherCard[1]">
             <image
               class="card-img-src"
-              :src="getCardImg(otherCardTwo)"
+              :src="getCardImg(otherCard[1])"
               v-if="isOpen"
             ></image>
           </view>
@@ -81,11 +81,11 @@
           </view>
         </view>
         <view class="right-my-card">
-          <view class="card-img img-one" v-if="cardOne">
-            <image class="card-img-src" :src="getCardImg(cardOne)"></image>
+          <view class="card-img img-one" v-if="myCard[0]">
+            <image class="card-img-src" :src="getCardImg(myCard[0])"></image>
           </view>
-          <view class="card-img img-two" v-if="cardTwo">
-            <image class="card-img-src" :src="getCardImg(cardTwo)"></image>
+          <view class="card-img img-two" v-if="myCard[1]">
+            <image class="card-img-src" :src="getCardImg(myCard[1])"></image>
           </view>
         </view>
       </view>
@@ -125,10 +125,8 @@ export default Vue.extend({
       isFirstStatus: 0, //是黑还是红
       myFirst: false,//先手
       otherFirst: false,//先手
-      cardOne: "",
-      cardTwo: "",
-      otherCardOne: "",
-      otherCardTwo: "",
+      myCard:[],//我摸的
+      otherCard:[],//他摸的
       myUserInfo: {
         name: "",
         avatar: "../../static/images/default.jpg",
@@ -169,14 +167,6 @@ export default Vue.extend({
         }
       }
       return newPoker;
-    },
-    cardOneImg() {
-      const name: string = this.cardOne;
-      return name ? `../../static/images/${name}.jpg` : "";
-    },
-    cardTwoImg() {
-      const name: string = this.cardTwo;
-      return name ? `../../static/images/${name}.jpg` : "";
     },
   },
   onLoad() {
@@ -321,8 +311,7 @@ export default Vue.extend({
           isBegin,
           isShuffle,
           list,
-          cardOne: otherCardOne,
-          cardTwo: otherCardTwo,
+          myCard: otherCard,
           isOpen,
           myFirst: otherFirst,
         } = JSON.parse(msg);
@@ -331,8 +320,7 @@ export default Vue.extend({
           this.isShuffle = isShuffle;
           this.isBegin = isBegin;
           this.isOpen = isOpen;
-          this.otherCardOne = otherCardOne;
-          this.otherCardTwo = otherCardTwo;
+          this.otherCard = otherCard;
           this.otherFirst = otherFirst;
         }
         if (isBegin) {
@@ -368,8 +356,7 @@ export default Vue.extend({
         isBegin: this.isBegin,
         isShuffle: this.isShuffle,
         isOpen: this.isOpen,
-        cardOne: this.cardOne,
-        cardTwo: this.cardTwo,
+        myCard: this.myCard,
         myFirst: this.myFirst,
         list: this.initPoker,
         ...msg,
@@ -417,8 +404,7 @@ export default Vue.extend({
       this.isShuffle = false;
       this.isBegin = false;
       this.isFirstStatus = 0;
-      this.cardOne = "";
-      this.cardTwo = "";
+      this.myCard = [];
       this.sendSocketMessage({ isBegin: false, isShuffle: false });
       uni.setStorage({
         key: "WS_MESSAGE",
@@ -443,22 +429,36 @@ export default Vue.extend({
         this.toast("请点击开局");
         return;
       }
-      if(!this.cardOne && !this.cardTwo && !this.otherCardOne && !this.otherCardTwo){
+      if(!this.myCard.length && !this.otherCard.length){
         this.myFirst = true;
         //先手
       }
-      if (this.cardOne && this.cardTwo) {
-        this.cardOne = "";
-        this.cardTwo = "";
+      
+      if(this.myFirst){
+        //先手逻辑
+        if(this.myCard.length > this.otherCard.length){
+          this.toast('等对手摸牌');
+          return;
+        }
+      }else{
+        //后手逻辑
+        if(this.myCard.length===this.otherCard.length){
+          this.toast('等对手摸牌');
+          return;
+        }
+      }
+      if (this.myCard.length === 2) {
+        this.myCard = [];
         return;
       }
       const pokerList = this.pokerList;
       const card = pokerList[0];
-      if (!this.cardOne) {
-        this.cardOne = card;
-      } else if (!this.cardTwo) {
-        this.cardTwo = card;
-      }
+      this.myCard.push(card)
+      // if (!this.cardOne) {
+      //   this.cardOne = card;
+      // } else if (!this.cardTwo) {
+      //   this.cardTwo = card;
+      // }
       const newList = pokerList.slice(1, 55);
       this.pokerList = newList;
       this.sendSocketMessage({
@@ -476,9 +476,8 @@ export default Vue.extend({
     },
     //run away
     eventRunAway() {
-      if (this.cardOne && this.cardTwo) {
-        this.cardOne = "";
-        this.cardTwo = "";
+      if (this.myCard.length===2) {
+        this.myCard = [];
         this.myAwayTime++;
       }
     },
