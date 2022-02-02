@@ -11,6 +11,20 @@
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
     <view class="player-stage">
+      <!-- 未登录遮罩 -->
+        <view class="stage-no" v-if="!roomCreated">
+          <view class="get-room-num">
+            <input
+              class="room-num"
+              type="number"
+              maxlength="4"
+              placeholder="输入4位房间号创建或加入"
+              @blur="eventNumBlur"
+              :value="roomNum"
+            />
+          </view>
+          <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
+        </view>
       <view class="stage-left">
         <view
           class="player-btn"
@@ -35,20 +49,6 @@
         <view class="player-btn" @tap="eventGetCard">3分</view>
       </view>
       <view class="stage-right">
-        <!-- 未登录遮罩 -->
-        <view class="stage-no" v-if="!roomCreated">
-          <view class="get-room-num">
-            <input
-              class="room-num"
-              type="number"
-              maxlength="4"
-              placeholder="输入4位房间号创建或加入"
-              @blur="eventNumBlur"
-              :value="roomNum"
-            />
-          </view>
-          <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
-        </view>
         <!-- 已登录 -->
         <view class="right-other-card" :class="{'not-open':!isOpen}">
           <view class="card-img img-one" v-if="cardOne">
@@ -564,7 +564,7 @@ export default Vue.extend({
   top: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.44);
   z-index: 9;
 }
 .get-room-num {
@@ -574,7 +574,7 @@ export default Vue.extend({
   border: #2fb157 2rpx solid;
   background: #ffffff;
   border-radius: 10rpx;
-  margin-top: 700rpx;
+  margin-top: 50%;
 }
 .room-num {
   height: 60rpx;
