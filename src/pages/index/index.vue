@@ -332,17 +332,20 @@ export default Vue.extend({
           this.pokerList = list;
           this.isShuffle = isShuffle;
           this.isBegin = isBegin;
-          this.isOpen = isOpen;
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
           this.otherWin = otherWin;
-          this.myWin = !otherWin
+          this.myWin = !otherWin;
+          this.myFirst = !otherFirst;
+          this.isOpen = isOpen;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
-        if (isOpen) {
-          this.openCardModal(!otherWin);
+        if (!isOpen) {
+          this.myCard = [];
+          this.otherCard = [];
+          // this.sendSocketMessage();
         }
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
@@ -377,7 +380,7 @@ export default Vue.extend({
         myCard: this.myCard,
         myFirst: this.myFirst,
         myWin: this.myWin,
-        list: this.pokerList.length?this.pokerList:this.initPoker,
+        list: this.pokerList.length ? this.pokerList : this.initPoker,
         ...msg,
       };
       console.log("this.socketStatus...", this.socketStatus, params);
@@ -448,9 +451,18 @@ export default Vue.extend({
         this.toast("请点击开局");
         return;
       }
+      if (this.isOpen) {
+        this.myCard = [];
+        this.otherCard = [];
+        this.isOpen = false;
+        this.myFirst = !this.myWin;
+        this.otherFirst = !!this.myWin;
+        this.sendSocketMessage();
+        return;
+      }
       if (!this.myCard.length && !this.otherCard.length) {
         if (this.otherFirst) {
-          this.toast("对手先摸");
+          this.toast("对方先摸");
           return;
         }
         if (!this.myFirst && !this.otherFirst) {
@@ -462,7 +474,7 @@ export default Vue.extend({
       if (this.myFirst) {
         //先手逻辑
         if (this.myCard.length > this.otherCard.length) {
-          this.toast("等对手摸牌");
+          this.toast("等对方摸牌");
           return;
         }
       } else {
@@ -471,7 +483,7 @@ export default Vue.extend({
           this.myCard.length === this.otherCard.length &&
           this.myCard.length !== 2
         ) {
-          this.toast("等对手摸牌");
+          this.toast("等对方摸牌");
           return;
         }
       }
@@ -484,11 +496,6 @@ export default Vue.extend({
       const pokerList = this.pokerList;
       const card = pokerList[0];
       this.myCard.push(card);
-      // if (!this.cardOne) {
-      //   this.cardOne = card;
-      // } else if (!this.cardTwo) {
-      //   this.cardTwo = card;
-      // }
       const newList = pokerList.slice(1, 55);
       this.pokerList = newList;
       this.sendSocketMessage({
@@ -521,7 +528,7 @@ export default Vue.extend({
         this.myFirst = !myWin;
         this.otherFirst = myWin;
         this.sendSocketMessage();
-        this.openCardModal(myWin);
+        // this.openCardModal(myWin);
       }
     },
     checkMyWin() {
@@ -665,12 +672,12 @@ export default Vue.extend({
         showCancel: false,
         confirmText: "下一把",
         success() {
-          that.myFirst = !win;
-          that.otherFirst = !!win;
           if (that.isOpen) {
             that.myCard = [];
             that.otherCard = [];
             that.isOpen = false;
+            that.myFirst = !win;
+            that.otherFirst = !!win;
             that.sendSocketMessage();
           }
         },
