@@ -444,8 +444,14 @@ export default Vue.extend({
         return;
       }
       if(!this.myCard.length && !this.otherCard.length){
-        this.myFirst = true;
-        //先手
+        if(this.otherFirst){
+          this.toast('对手先摸');
+          return;
+        }
+        if(!this.myFirst && !this.otherFirst){
+          this.myFirst = true;
+          //先手
+        }
       }
       
       if(this.myFirst){
@@ -501,9 +507,9 @@ export default Vue.extend({
     eventOpenCard() {
       this.isOpen = true;
       const myWin = true;
+      this.myWin = myWin;
       this.openCardModal(myWin);
-     
-      this.sendSocketMessage({ isOpen: true, myWin });
+      this.sendSocketMessage({ myWin });
     },
     openCardModal(win:Boolean){
       const that = this;
@@ -513,6 +519,7 @@ export default Vue.extend({
             confirmText:'下一把',
             success(){
               that.myCard = [];
+              that.otherCard = [];
               that.isOpen = false;
               that.myFirst = !win;
               that.sendSocketMessage()
