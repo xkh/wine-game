@@ -53,11 +53,11 @@
       <view class="stage-right">
         <!-- 已登录 -->
         <view class="right-other-card" :class="{'not-open':!isOpen}">
-          <view class="card-img img-one" v-if="cardOne">
-            <image class="card-img-src" :src="cardOneImg" v-show="isOpen"></image>
+          <view class="card-img img-one" v-if="otherCardOne">
+            <image class="card-img-src" :src="getCardImg(otherCardOne)" v-show="isOpen"></image>
           </view>
-          <view class="card-img img-two" v-if="cardTwo">
-            <image class="card-img-src" :src="cardTwoImg" v-show="isOpen"></image>
+          <view class="card-img img-two" v-if="otherCardTwo">
+            <image class="card-img-src" :src="getCardImg(otherCardTwo)" v-show="isOpen"></image>
           </view>
         </view>
         <view class="right-all-card">
@@ -75,10 +75,10 @@
         </view>
         <view class="right-my-card">
           <view class="card-img img-one" v-if="cardOne">
-            <image class="card-img-src" :src="cardOneImg"></image>
+            <image class="card-img-src" :src="getCardImg(cardOne)"></image>
           </view>
           <view class="card-img img-two" v-if="cardTwo">
-            <image class="card-img-src" :src="cardTwoImg"></image>
+            <image class="card-img-src" :src="getCardImg(cardTwo)"></image>
           </view>
         </view>
       </view>
@@ -117,6 +117,8 @@ export default Vue.extend({
       isFirstStatus: 0, //是黑还是红
       cardOne: "",
       cardTwo: "",
+      otherCardOne: "",
+      otherCardTwo: "",
       myUserInfo: {
         name: "",
         avatar: "../../static/images/default.jpg",
@@ -181,6 +183,9 @@ export default Vue.extend({
     });
   },
   methods: {
+    getCardImg(cardName=''){
+      return cardName ? `../../static/images/${cardName}.jpg` : "";
+    },
     getOtherInfo(otherId=''){
       const that = this;
       // getUser
@@ -302,7 +307,7 @@ export default Vue.extend({
         if(fromId){
           this.otherId = fromId;
         }
-        const {isBegin, isShuffle, list} = JSON.parse(msg);
+        const {isBegin, isShuffle, list, cardOne: otherCardOne, cardTwo: otherCardTwo} = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
           this.isShuffle = isShuffle;
@@ -311,6 +316,8 @@ export default Vue.extend({
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
+        this.otherCardOne = otherCardOne;
+        this.otherCardTwo = otherCardTwo;
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
       //socket断开后
@@ -426,7 +433,7 @@ export default Vue.extend({
       }
       const newList = pokerList.slice(1, 55);
       this.pokerList = newList;
-      this.sendSocketMessage({ list: newList });
+      this.sendSocketMessage({ cardOne:this.cardOne,cardTwo:this.cardTwo, list: newList });
       console.log("card...", card, newList);
     },
     //黑红
