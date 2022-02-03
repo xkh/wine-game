@@ -322,8 +322,8 @@ export default Vue.extend({
       }
       //创建连接
       uni.connectSocket({
-        // url: "wss://api.xonepage.com/game/wss/" + id,
-        url: "ws://192.168.31.16:2001/game/wss/" + id,
+        url: "wss://api.xonepage.com/game/wss/" + id,
+        // url: "ws://192.168.31.16:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
