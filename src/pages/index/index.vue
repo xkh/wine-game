@@ -8,7 +8,7 @@
       <view class="player-landing" v-if="!otherId && roomCreated"
         >等待其他玩家进入房间</view
       >
-      <view class="player-landing" v-if="otherFirst && !isOpen">先手</view>
+      <view class="player-landing" v-if="otherFirst && !isOpen && isBegin">先手</view>
       <view class="player-landing win" v-if="otherWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
@@ -22,7 +22,7 @@
               type="number"
               maxlength="4"
               placeholder="输入4位房间号创建或加入"
-              @blur="eventNumBlur"
+              @input="eventNumBlur"
               :value="roomNum"
             />
           </view>
@@ -32,21 +32,31 @@
       <view class="stage-left">
         <view
           class="player-btn"
-          :class="{ 'begin': isBegin }"
+          :class="{ begin: isBegin }"
           @tap="eventShuffle"
           >{{ isBegin ? "禁止洗" : isShuffle ? "再洗洗" : "洗一洗" }}</view
         >
-        <view class="player-btn" :class="{ 'begin': isBegin }" @tap="eventStart">{{
-          isBegin ? "已开局" : "开局"
-        }}</view>
+        <view
+          class="player-btn"
+          :class="{ begin: isBegin }"
+          @tap="eventStart"
+          >{{ isBegin ? "已开局" : "开局" }}</view
+        >
         <view class="player-btn" @tap="eventWhoFirst">
           {{ isFirstStatus === 0 ? "扳花色" : "" }}
           {{ isFirstStatus === 1 ? "黑" : "" }}
           {{ isFirstStatus === 2 ? "红" : "" }}
         </view>
         <view class="player-btn over" @tap="eventOver">结束</view>
-        <view class="player-btn gap" :class="{ 'begin': isOpen }" @tap="eventGetCard">摸牌</view>
-        <view class="player-btn" @tap="eventOpenCard">{{isOpen?'收牌':'开牌'}}</view>
+        <view
+          class="player-btn gap"
+          :class="{ begin: isOpen }"
+          @tap="eventGetCard"
+          >摸牌</view
+        >
+        <view class="player-btn" @tap="eventOpenCard">{{
+          isOpen ? "收牌" : "开牌"
+        }}</view>
         <view class="player-btn" @tap="eventRunAway">逃跑</view>
         <!-- <view class="player-btn" @tap="eventGetCard">1分</view>
         <view class="player-btn" @tap="eventGetCard">2分</view>
@@ -101,7 +111,7 @@
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
       <view class="player-landing win" v-if="myWin && isOpen">赢！！！</view>
-      <view class="player-landing" v-if="myFirst && !isOpen">先手</view>
+      <view class="player-landing" v-if="myFirst && !isOpen && isBegin">先手</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -109,6 +119,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import heartCheck from "./heartCheck";
 // const baseUrl = "http://192.168.31.16:2001/game/";
 const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
@@ -147,6 +158,9 @@ export default Vue.extend({
       roomCreated: false,
       myWin: false,
       otherWin: false,
+      lockReconnect: false,
+      reConnectTimer: null,
+      reConnectLimit: 0,
     };
   },
   watch: {
@@ -164,6 +178,7 @@ export default Vue.extend({
         this.myCard = [];
         this.otherCard = [];
       }
+      this.myFirst = !this.otherFirst;
     },
   },
   computed: {
@@ -299,23 +314,34 @@ export default Vue.extend({
     },
     //初始化
     initSocket(id = "") {
+      uni.showLoading({
+  title: '连接中...',
+})
       if (!id) {
         return;
       }
       //创建连接
       uni.connectSocket({
-        url: "wss:api.xonepage.com/game/wss/" + id,
-        // url: "ws://192.168.31.16:2001/game/wss/" + id,
+        // url: "wss://api.xonepage.com/game/wss/" + id,
+        url: "ws://192.168.31.16:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
         this.socketStatus = 1;
         console.log("websocket已连接...", res);
-        this.sendSocketMessage();
+        heartCheck.reset().start();
+        if(this.otherId){
+          this.sendSocketMessage();
+        }
+        uni.hideLoading();
       });
       //监听socket 接受服务器的消息
       uni.onSocketMessage((e: object) => {
         const { data } = e as any;
+        if(data==='pong'){
+          heartCheck.reset().start();
+          return;
+        }
         const { fromId, msg } = JSON.parse(data);
         if (fromId) {
           this.otherId = fromId;
@@ -337,15 +363,16 @@ export default Vue.extend({
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
           this.otherWin = otherWin;
-          this.myWin = !otherWin;
-          this.myFirst = !otherFirst;
+          // this.myWin = !otherWin;
+          // this.myFirst = !otherFirst;
           this.isOpen = isOpen;
           this.isFirstStatus = isFirstStatus;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
-        if (!isOpen) {
+        if (isOpen) {
+          this.myWin = !otherWin;
           // this.myCard = [];
           // this.otherCard = [];
           // this.sendSocketMessage();
@@ -357,11 +384,30 @@ export default Vue.extend({
         this.socketStatus = 0;
         this.closeSocket();
         console.log("websocket已断开...", res);
+        this.reConnect(id);
+        uni.hideLoading();
       });
       //socket异常
       uni.onSocketError((err) => {
         console.log("websocket异常了...", err);
+        this.reConnect(id);
+        uni.hideLoading();
       });
+    },
+    //重连
+    reConnect(id='') {
+      if (this.lockReconnect) return;
+      this.lockReconnect = true;
+      if((this as any).reConnectTimer){
+        clearTimeout((this as any).reConnectTimer);
+      }
+      if (this.reConnectLimit < 12) {
+        (this as any).reConnectTimer = setTimeout(() => {
+          this.initSocket(id);
+          this.lockReconnect = false;
+        }, 3000);
+        this.reConnectLimit++;
+      }
     },
     //关闭socket
     closeSocket() {
@@ -519,7 +565,7 @@ export default Vue.extend({
     },
     //open card
     eventOpenCard() {
-      if(this.isOpen){
+      if (this.isOpen) {
         this.myCard = [];
         this.otherCard = [];
         this.isOpen = false;
@@ -536,8 +582,8 @@ export default Vue.extend({
         this.myFirst = !myWin;
         this.otherFirst = myWin;
         this.sendSocketMessage();
-      }else{
-        this.toast('未达到开牌条件！')
+      } else {
+        this.toast("未达到开牌条件！");
       }
     },
     checkMyWin() {
@@ -941,8 +987,7 @@ export default Vue.extend({
   margin-top: 40rpx;
 }
 
-.player-landing.win{
+.player-landing.win {
   color: #f54551;
 }
-
 </style>
