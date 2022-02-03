@@ -8,7 +8,9 @@
       <view class="player-landing" v-if="!otherId && roomCreated"
         >等待其他玩家进入房间</view
       >
-      <view class="player-landing" v-if="otherFirst && !isOpen && isBegin">先手</view>
+      <view class="player-landing" v-if="otherFirst && !isOpen && isBegin"
+        >先手</view
+      >
       <view class="player-landing win" v-if="otherWin && isOpen">赢！！！</view>
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
@@ -111,7 +113,9 @@
       <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
       <view class="player-landing win" v-if="myWin && isOpen">赢！！！</view>
-      <view class="player-landing" v-if="myFirst && !isOpen && isBegin">先手</view>
+      <view class="player-landing" v-if="myFirst && !isOpen && isBegin"
+        >先手</view
+      >
       <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
     </view>
   </view>
@@ -315,8 +319,8 @@ export default Vue.extend({
     //初始化
     initSocket(id = "") {
       uni.showLoading({
-  title: '连接中...',
-})
+        title: "连接中...",
+      });
       if (!id) {
         return;
       }
@@ -330,7 +334,7 @@ export default Vue.extend({
         this.socketStatus = 1;
         console.log("websocket已连接...", res);
         heartCheck.reset().start();
-        if(this.otherId){
+        if (this.otherId) {
           this.sendSocketMessage();
         }
         uni.hideLoading();
@@ -338,7 +342,7 @@ export default Vue.extend({
       //监听socket 接受服务器的消息
       uni.onSocketMessage((e: object) => {
         const { data } = e as any;
-        if(data==='pong'){
+        if (data === "pong") {
           heartCheck.reset().start();
           return;
         }
@@ -395,10 +399,10 @@ export default Vue.extend({
       });
     },
     //重连
-    reConnect(id='') {
+    reConnect(id = "") {
       if (this.lockReconnect) return;
       this.lockReconnect = true;
-      if((this as any).reConnectTimer){
+      if ((this as any).reConnectTimer) {
         clearTimeout((this as any).reConnectTimer);
       }
       if (this.reConnectLimit < 12) {
