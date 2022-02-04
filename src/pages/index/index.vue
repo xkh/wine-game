@@ -166,8 +166,8 @@
 <script lang="ts">
 import Vue from "vue";
 import heartCheck from "./heartCheck";
-const baseUrl = "http://192.168.31.16:2001/game/";
-// const baseUrl = "https://api.xonepage.com/game/";
+// const baseUrl = "http://192.168.31.16:2001/game/";
+const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   data() {
     return {
@@ -283,6 +283,13 @@ export default Vue.extend({
       }
     });
   },
+  onShareAppMessage(){
+    const {roomNum} = this as any;
+    return{
+      title:'快来和我一起喷大气！',
+      path: `/pages/index/index?roomNum=${roomNum}`
+    }
+  },
   methods: {
     getCardImg(cardName = "") {
       return cardName ? `../../static/images/${cardName}.jpg` : "";
@@ -395,8 +402,8 @@ export default Vue.extend({
       }
       //创建连接
       uni.connectSocket({
-        // url: "wss://api.xonepage.com/game/wss/" + id,
-        url: "ws://192.168.31.16:2001/game/wss/" + id,
+        url: "wss://api.xonepage.com/game/wss/" + id,
+        // url: "ws://192.168.31.16:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
