@@ -1,6 +1,26 @@
 <template>
-  <view class="content">
-    <view class="player-user one">
+  <view class="content" :class="{ green: roomCreated }">
+    <!-- 未登录遮罩 -->
+    <view class="stage-no" v-if="!roomCreated">
+      <image
+        class="stage-form-back"
+        src="../../static/images/create_room.jpg"
+      />
+      <view class="stage-form">
+        <view class="get-room-num">
+          <input
+            class="room-num"
+            type="number"
+            maxlength="4"
+            placeholder="输入4位房间号创建或加入"
+            @input="eventNumBlur"
+            :value="roomNum"
+          />
+        </view>
+        <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
+      </view>
+    </view>
+    <view class="player-user one" v-if="roomCreated">
       <view class="my-info">
         <image class="player-img" :src="otherUserInfo.avatar"></image>
         <view class="player-name">{{ otherUserInfo.name }}</view>
@@ -11,26 +31,17 @@
       <view class="player-landing" v-if="otherFirst && !isOpen && isBegin"
         >先手</view
       >
-      <view class="player-landing win" v-if="otherWin && isOpen">赢！！！</view>
-      <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
-    </view>
-    <view class="player-stage">
-      <!-- 未登录遮罩 -->
-      <view class="stage-no" v-if="!roomCreated">
-        <view class="stage-form">
-          <view class="get-room-num">
-            <input
-              class="room-num"
-              type="number"
-              maxlength="4"
-              placeholder="输入4位房间号创建或加入"
-              @input="eventNumBlur"
-              :value="roomNum"
-            />
-          </view>
-          <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
-        </view>
+      <view class="player-landing" v-if="otherScoreNum"
+        >
+        <text>叫{{ otherScoreNum }}分</text>
+        <text class="red" v-if="otherRunAway && otherScoreNum">逃</text>
       </view>
+      <view class="player-landing win" v-if="otherWin && isOpen">{{myRunAway?'避十':''}}赢！！！</view>
+      <view class="player-away" v-if="otherId && roomCreated"
+        >已逃{{ otherAwayTime }}次</view
+      >
+    </view>
+    <view class="player-stage" v-if="roomCreated">
       <view class="stage-left">
         <view
           class="player-btn"
@@ -56,13 +67,36 @@
           @tap="eventGetCard"
           >摸牌</view
         >
-        <view class="player-btn" @tap="eventOpenCard">{{
-          isOpen ? "收牌" : "开牌"
-        }}</view>
-        <view class="player-btn" @tap="eventRunAway">逃跑</view>
-        <!-- <view class="player-btn" @tap="eventGetCard">1分</view>
-        <view class="player-btn" @tap="eventGetCard">2分</view>
-        <view class="player-btn" @tap="eventGetCard">3分</view> -->
+        <view
+          class="player-btn"
+          :class="{ begin: !canOpen }"
+          @tap="eventOpenCard"
+          >{{ isOpen ? "收牌" : "开牌" }}</view
+        >
+        <view
+          class="player-btn"
+          :class="{ begin: !canAddCup }"
+          @tap="eventAddCup(1)"
+          >一分</view
+        >
+        <view
+          class="player-btn"
+          :class="{ begin: !canAddCup }"
+          @tap="eventAddCup(2)"
+          >二分</view
+        >
+        <view
+          class="player-btn"
+          :class="{ begin: !canAddCup }"
+          @tap="eventAddCup(3)"
+          >三分</view
+        >
+        <view
+          class="player-btn"
+          :class="{ begin: !canRunAway }"
+          @tap="eventRunAway"
+          >逃跑</view
+        >
       </view>
       <view class="stage-right">
         <!-- 已登录 -->
@@ -70,15 +104,21 @@
           <view class="card-img img-one" v-if="otherCard[0]">
             <image
               class="card-img-src"
-              :src="getCardImg(otherCard[0])"
-              v-if="isOpen"
+              :src="
+                isOpen
+                  ? getCardImg(otherCard[0])
+                  : '../../static/images/card_back.jpg'
+              "
             ></image>
           </view>
           <view class="card-img img-two" v-if="otherCard[1]">
             <image
               class="card-img-src"
-              :src="getCardImg(otherCard[1])"
-              v-if="isOpen"
+              :src="
+                isOpen
+                  ? getCardImg(otherCard[1])
+                  : '../../static/images/card_back.jpg'
+              "
             ></image>
           </view>
         </view>
@@ -105,18 +145,20 @@
         </view>
       </view>
     </view>
-    <view class="player-user two">
+    <view class="player-user two" v-if="roomCreated">
       <view class="my-info">
         <image class="player-img" :src="myUserInfo.avatar"></image>
         <view class="player-name">{{ myUserInfo.name }}</view>
       </view>
-      <!-- <view class="player-card">{{ cardTwo }}</view> -->
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
-      <view class="player-landing win" v-if="myWin && isOpen">赢！！！</view>
       <view class="player-landing" v-if="myFirst && !isOpen && isBegin"
         >先手</view
       >
-      <!-- <view class="player-away">已逃{{ myAwayTime }}次</view> -->
+      <view class="player-landing" v-if="myScoreNum"><text>叫{{ myScoreNum }}分</text><text class="red" v-if="myRunAway && myScoreNum">逃</text></view>
+      <view class="player-landing win" v-if="myWin && isOpen">{{otherRunAway?'避十':''}}赢！！！</view>
+      <view class="player-away" v-if="otherId && roomCreated"
+        >已逃{{ myAwayTime }}次</view
+      >
     </view>
   </view>
 </template>
@@ -124,8 +166,8 @@
 <script lang="ts">
 import Vue from "vue";
 import heartCheck from "./heartCheck";
-// const baseUrl = "http://192.168.31.16:2001/game/";
-const baseUrl = "https://api.xonepage.com/game/";
+const baseUrl = "http://192.168.31.16:2001/game/";
+// const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   data() {
     return {
@@ -165,6 +207,10 @@ export default Vue.extend({
       lockReconnect: false,
       reConnectTimer: null,
       reConnectLimit: 0,
+      myScoreNum: 0,
+      otherScoreNum: 0,
+      myRunAway: false,
+      otherRunAway: false,
     };
   },
   watch: {
@@ -198,6 +244,29 @@ export default Vue.extend({
         }
       }
       return newPoker;
+    },
+    canAddCup() {
+      const { myCard, otherCard, isOpen, myFirst, myScoreNum, otherScoreNum } =
+        this as any;
+      const isCan = myCard.length === 2 && otherCard.length === 2 && !isOpen;
+      if (myFirst && myScoreNum === 0) {
+        return isCan;
+      } else {
+        return (
+          isCan &&
+          otherScoreNum > myScoreNum &&
+          myScoreNum < 3 &&
+          otherScoreNum < 3
+        );
+      }
+    },
+    canRunAway() {
+      const { myCard, otherCard, isOpen } = this as any;
+      return myCard.length === 2 && otherCard.length === 2 && !isOpen;
+    },
+    canOpen() {
+      const { myCard, otherCard, isOpen } = this as any;
+      return myCard.length === 2 && otherCard.length === 2;
     },
   },
   onLoad() {
@@ -326,8 +395,8 @@ export default Vue.extend({
       }
       //创建连接
       uni.connectSocket({
-        url: "wss://api.xonepage.com/game/wss/" + id,
-        // url: "ws://192.168.31.16:2001/game/wss/" + id,
+        // url: "wss://api.xonepage.com/game/wss/" + id,
+        url: "ws://192.168.31.16:2001/game/wss/" + id,
       });
       //socket打开后
       uni.onSocketOpen((res) => {
@@ -359,6 +428,9 @@ export default Vue.extend({
           isOpen,
           myFirst: otherFirst,
           myWin: otherWin,
+          myScoreNum: otherScoreNum,
+          myRunAway: otherRunAway,
+          myAwayTime: otherAwayTime,
         } = JSON.parse(msg);
         if (list && list.length) {
           this.pokerList = list;
@@ -371,15 +443,19 @@ export default Vue.extend({
           // this.myFirst = !otherFirst;
           this.isOpen = isOpen;
           this.isFirstStatus = isFirstStatus;
+          this.otherScoreNum = otherScoreNum;
+          this.otherRunAway = otherRunAway;
+          this.otherAwayTime = otherAwayTime;
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
         }
         if (isOpen) {
           this.myWin = !otherWin;
-          // this.myCard = [];
-          // this.otherCard = [];
-          // this.sendSocketMessage();
+        }else{
+          if(otherRunAway){
+            this.myCard = [];
+          }
         }
         console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
@@ -434,6 +510,9 @@ export default Vue.extend({
         myFirst: this.myFirst,
         myWin: this.myWin,
         isFirstStatus: this.isFirstStatus,
+        myScoreNum: this.myScoreNum,
+        myRunAway: this.myRunAway,
+        myAwayTime: this.myAwayTime,
         list: this.pokerList.length ? this.pokerList : this.initPoker,
         ...msg,
       };
@@ -481,7 +560,15 @@ export default Vue.extend({
       this.isBegin = false;
       this.isFirstStatus = 0;
       this.myCard = [];
-      this.sendSocketMessage({ isBegin: false, isShuffle: false });
+      this.isOpen = false;
+      this.isFirstStatus = 0;
+      this.myScoreNum = 0;
+      this.otherScoreNum = 0;
+      this.myRunAway = false;
+      this.otherRunAway = false;
+      this.myFirst = false;
+      this.otherFirst = false;
+      this.sendSocketMessage();
       uni.setStorage({
         key: "WS_MESSAGE",
         data: null,
@@ -541,6 +628,9 @@ export default Vue.extend({
         }
         return;
       }
+      this.myScoreNum = 0;
+      this.myRunAway = false;
+      this.otherScoreNum = 0;
       const pokerList = this.pokerList;
       const card = pokerList[0];
       this.myCard.push(card);
@@ -549,7 +639,6 @@ export default Vue.extend({
       this.sendSocketMessage({
         list: newList,
       });
-      console.log("card...", card, newList);
     },
     //黑红
     eventWhoFirst() {
@@ -561,14 +650,71 @@ export default Vue.extend({
       this.sendSocketMessage();
     },
     //run away
+    eventAddCup(num: any) {
+      if ((this as any).canAddCup) {
+        if (num <= this.otherScoreNum) {
+          this.toast("请加码");
+          return;
+        }
+        this.myScoreNum = num;
+        this.sendSocketMessage();
+      }
+    },
     eventRunAway() {
-      if (this.myCard.length === 2) {
-        this.myCard = [];
-        this.myAwayTime++;
+      if ((this as any).canRunAway) {
+        if (!this.myFirst && !this.myScoreNum && !this.otherScoreNum) {
+          this.toast("等待对方叫分");
+          return;
+        }
+        if (this.myFirst && !this.myScoreNum) {
+          if (this.myAwayTime === 3) {
+            this.myAwayTime = 0;
+          }
+          this.myCard = [];
+          this.otherCard = [];
+          this.myFirst = true;
+          this.otherFirst = false;
+          this.myRunAway = true;
+          this.myAwayTime++;
+          this.sendSocketMessage();
+          return;
+        }
+        if (this.otherScoreNum) {
+          const o1: any = (this.otherCard[0] as string).split("_");
+          const o2: any = (this.otherCard[1] as string).split("_");
+          const otherCardInfo = this.getCardValue(o1, o2);
+          let { realNum } = otherCardInfo;
+          if (realNum === 0) {
+            //对方必十
+            this.isOpen = true;
+            this.myWin = false;
+            this.otherWin = true;
+            this.myRunAway = true;
+          } else if (this.myScoreNum) {
+            this.myCard = [];
+            this.otherCard = [];
+            this.myFirst = true;
+            this.otherFirst = false;
+            this.myRunAway = true;
+            this.toast(`逃跑喝已上的${this.myScoreNum}分酒`, 2000);
+          } else {
+            if (this.myAwayTime === 3) {
+              this.myAwayTime = 0;
+            }
+            this.myCard = [];
+            this.otherCard = [];
+            this.myFirst = true;
+            this.otherFirst = false;
+            this.myRunAway = true;
+            this.myAwayTime++;
+          }
+          this.sendSocketMessage();
+        }
       }
     },
     //open card
     eventOpenCard() {
+      if (!this.canOpen) return;
       if (this.isOpen) {
         this.myCard = [];
         this.otherCard = [];
@@ -587,7 +733,7 @@ export default Vue.extend({
         this.otherFirst = myWin;
         this.sendSocketMessage();
       } else {
-        this.toast("未达到开牌条件！");
+        this.toast("未达到开牌条件");
       }
     },
     checkMyWin() {
@@ -803,13 +949,24 @@ export default Vue.extend({
   height: 100vh;
   overflow: hidden;
 }
+.content.green {
+  background: rgb(0, 48, 0);
+}
 .player-user {
   flex: 0 0 auto;
   display: flex;
   height: 150rpx;
-  background: #eeeeee;
   width: 100%;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  color: #ffffff;
+}
+.player-user.two {
+  box-sizing: border-box;
+  height: calc(150rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .player-stage {
   flex: 1 1 auto;
@@ -837,12 +994,11 @@ export default Vue.extend({
   background: #f54551;
 }
 .player-btn.gap {
-  margin-top: 80rpx;
+  /* margin-top: 80rpx; */
 }
 .stage-left {
   font-size: 26rpx;
   width: 150rpx;
-  border: 2rpx solid #f5f5f5;
   flex-shrink: 0;
 }
 .stage-right {
@@ -860,8 +1016,13 @@ export default Vue.extend({
   top: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.44);
+  /* background: rgba(255, 255, 255, 0.44); */
   z-index: 9;
+  /* background: '../../static/images/create_room.jpg'; */
+}
+.stage-form-back {
+  width: 100%;
+  height: 100%;
 }
 .stage-form {
   position: absolute;
@@ -894,15 +1055,14 @@ export default Vue.extend({
 }
 .all-cards {
   width: 600rpx;
-  height: 470rpx;
+  height: 374rpx;
 }
 .all-cards-img {
   width: 600rpx;
-  height: 470rpx;
+  height: 374rpx;
 }
 .right-other-card {
   flex: 1;
-  background: #f5f5f5;
   position: relative;
 }
 .right-other-card .card-img {
@@ -910,7 +1070,6 @@ export default Vue.extend({
 }
 .right-my-card {
   flex: 1;
-  background: #f5f5f5;
   position: relative;
 }
 .card-img {
@@ -927,6 +1086,7 @@ export default Vue.extend({
 }
 .not-open .card-img {
   background: #999999;
+  border-radius: 10rpx;
 }
 .card-img.img-one,
 .card-img.img-two {
@@ -949,14 +1109,6 @@ export default Vue.extend({
   height: 100rpx;
   width: 100rpx;
   border-radius: 100rpx;
-}
-.one {
-  top: 20rpx;
-  left: 20rpx;
-}
-.two {
-  bottom: 20rpx;
-  left: 20rpx;
 }
 .my-info {
   display: flex;
@@ -992,6 +1144,9 @@ export default Vue.extend({
 }
 
 .player-landing.win {
+  color: #f54551;
+}
+.player-landing .red {
   color: #f54551;
 }
 </style>
