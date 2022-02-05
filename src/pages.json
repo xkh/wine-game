@@ -3,7 +3,8 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "喷大气"
+				"navigationBarTitleText": "喷大气",
+				"navigationStyle": "custom"
 			}
 		}
 	],

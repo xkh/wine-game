@@ -1,5 +1,8 @@
 <template>
   <view class="content" :class="{ green: roomCreated }">
+    <navBar :title="'喷大气'+(roomNum?(roomNum+'房间'):'')">
+      
+    </navBar>
     <!-- 未登录遮罩 -->
     <view class="stage-no" v-if="!roomCreated">
       <image
@@ -28,15 +31,19 @@
       <view class="player-landing" v-if="!otherId && roomCreated"
         >等待其他玩家进入房间</view
       >
+      <view class="player-landing" v-if="otherClose && roomCreated">{{
+        otherId ? "玩家离线请稍后..." : "玩家已下线"
+      }}</view>
       <view class="player-landing" v-if="otherFirst && !isOpen && isBegin"
         >先手</view
       >
-      <view class="player-landing" v-if="otherScoreNum"
-        >
+      <view class="player-landing" v-if="otherScoreNum">
         <text>叫{{ otherScoreNum }}分</text>
         <text class="red" v-if="otherRunAway && otherScoreNum">逃</text>
       </view>
-      <view class="player-landing win" v-if="otherWin && isOpen">{{myRunAway?'避十':''}}赢！！！</view>
+      <view class="player-landing win" v-if="otherWin && isOpen"
+        >{{ myRunAway ? "避十" : "" }}赢！！！</view
+      >
       <view class="player-away" v-if="otherId && roomCreated"
         >已逃{{ otherAwayTime }}次</view
       >
@@ -151,11 +158,19 @@
         <view class="player-name">{{ myUserInfo.name }}</view>
       </view>
       <view class="player-landing" v-if="!roomCreated">未加入房间</view>
+      <view class="player-landing" v-if="myClose && roomCreated"
+        >离线请稍后</view
+      >
       <view class="player-landing" v-if="myFirst && !isOpen && isBegin"
         >先手</view
       >
-      <view class="player-landing" v-if="myScoreNum"><text>叫{{ myScoreNum }}分</text><text class="red" v-if="myRunAway && myScoreNum">逃</text></view>
-      <view class="player-landing win" v-if="myWin && isOpen">{{otherRunAway?'避十':''}}赢！！！</view>
+      <view class="player-landing" v-if="myScoreNum"
+        ><text>叫{{ myScoreNum }}分</text
+        ><text class="red" v-if="myRunAway && myScoreNum">逃</text></view
+      >
+      <view class="player-landing win" v-if="myWin && isOpen"
+        >{{ otherRunAway ? "避十" : "" }}赢！！！</view
+      >
       <view class="player-away" v-if="otherId && roomCreated"
         >已逃{{ myAwayTime }}次</view
       >
@@ -166,9 +181,11 @@
 <script lang="ts">
 import Vue from "vue";
 import heartCheck from "./heartCheck";
+import navBar from '../../components/navBar.vue';
 // const baseUrl = "http://192.168.31.16:2001/game/";
 const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
+  components: {navBar},
   data() {
     return {
       poker: {
@@ -211,6 +228,8 @@ export default Vue.extend({
       otherScoreNum: 0,
       myRunAway: false,
       otherRunAway: false,
+      myClose: false,
+      otherClose: false,
     };
   },
   watch: {
@@ -283,12 +302,15 @@ export default Vue.extend({
       }
     });
   },
-  onShareAppMessage(){
-    const {roomNum} = this as any;
-    return{
-      title:'快来和我一起喷大气！',
-      path: `/pages/index/index?roomNum=${roomNum}`
-    }
+  onUnload() {
+    this.closeSocket();
+  },
+  onShareAppMessage() {
+    const { roomNum } = this as any;
+    return {
+      title: "快来和我一起喷大气！",
+      path: `/pages/index/index?roomNum=${roomNum}`,
+    };
   },
   methods: {
     getCardImg(cardName = "") {
@@ -402,18 +424,24 @@ export default Vue.extend({
       }
       //创建连接
       uni.connectSocket({
-        url: "wss://api.xonepage.com/game/wss/" + id,
-        // url: "ws://192.168.31.16:2001/game/wss/" + id,
+        url: `wss://api.xonepage.com/game/wss?id=${id}&room_num=${this.roomNum}`,
+        // url: `ws://192.168.31.16:2001/game/wss?id=${id}&room_num=${this.roomNum}`,
+        complete() {
+          uni.hideLoading();
+        },
       });
       //socket打开后
       uni.onSocketOpen((res) => {
         this.socketStatus = 1;
+        this.myClose = false;
         console.log("websocket已连接...", res);
         heartCheck.reset().start();
         if (this.otherId) {
           this.sendSocketMessage();
         }
-        uni.hideLoading();
+        // setTimeout(()=>{
+        //   this.closeSocket();
+        // },6000)
       });
       //监听socket 接受服务器的消息
       uni.onSocketMessage((e: object) => {
@@ -423,9 +451,23 @@ export default Vue.extend({
           return;
         }
         const { fromId, msg } = JSON.parse(data);
+        console.log("websocket监听到消息！！！fromId", fromId, msg);
+        if (msg === "out") {
+          this.otherClose = true;
+          this.otherId = "";
+          this.eventOver();
+          return;
+        }
+        if (msg === "off") {
+          this.otherClose = true;
+          return;
+        }
+
         if (fromId) {
           this.otherId = fromId;
+          this.otherClose = false;
         }
+
         const {
           isBegin,
           isShuffle,
@@ -459,26 +501,28 @@ export default Vue.extend({
         }
         if (isOpen) {
           this.myWin = !otherWin;
-        }else{
-          if(otherRunAway){
+        } else {
+          if (otherRunAway) {
             this.myCard = [];
           }
         }
-        console.log("websocket监听到消息！！！fromId", fromId, JSON.parse(msg));
       });
       //socket断开后
       uni.onSocketClose((res) => {
         this.socketStatus = 0;
-        this.closeSocket();
         console.log("websocket已断开...", res);
-        this.reConnect(id);
-        uni.hideLoading();
+        const { code, reason } = res as any;
+        if (code == 1000 && reason == "normal closure") {
+          this.myClose = true;
+          //主动关闭的
+        } else {
+          this.reConnect(id);
+        }
       });
       //socket异常
       uni.onSocketError((err) => {
         console.log("websocket异常了...", err);
         this.reConnect(id);
-        uni.hideLoading();
       });
     },
     //重连
@@ -488,11 +532,11 @@ export default Vue.extend({
       if ((this as any).reConnectTimer) {
         clearTimeout((this as any).reConnectTimer);
       }
-      if (this.reConnectLimit < 12) {
+      if (this.reConnectLimit < 5) {
         (this as any).reConnectTimer = setTimeout(() => {
           this.initSocket(id);
           this.lockReconnect = false;
-        }, 3000);
+        }, 2000);
         this.reConnectLimit++;
       }
     },
@@ -956,6 +1000,9 @@ export default Vue.extend({
   height: 100vh;
   overflow: hidden;
 }
+.content-title{
+  text-align: center;
+}
 .content.green {
   background: rgb(0, 48, 0);
 }
@@ -969,6 +1016,10 @@ export default Vue.extend({
   padding: 0 20rpx;
   box-sizing: border-box;
   color: #ffffff;
+}
+.player-user.one {
+  height: calc(150rpx + 170rpx);
+  padding-top: 170rpx;
 }
 .player-user.two {
   box-sizing: border-box;
