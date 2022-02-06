@@ -34,6 +34,9 @@ export default {
     let menuButtonInfo = uni.getMenuButtonBoundingClientRect();
     this.titleBarHeight =
       (menuButtonInfo.top - this.statusBarHeight) * 2 + menuButtonInfo.height;
+      console.log('ttt...',this.titleBarHeight)
+    getApp().globalData.statusBarHeight = this.statusBarHeight;
+    getApp().globalData.titleBarHeight = this.titleBarHeight;
   },
 };
 </script>

@@ -3,7 +3,9 @@
     export default Vue.extend({
         mpType: 'app',
         globalData:{
-            userInfo:null
+            userInfo:null,
+            statusBarHeight:25,
+            titleBarHeight:0,
         },
         onLaunch() {
             console.log('App Launch')

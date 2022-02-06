@@ -23,7 +23,7 @@
         <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
       </view>
     </view>
-    <view class="player-user one" v-if="roomCreated">
+    <view class="player-user one" v-if="roomCreated" :style="{'padding-top':navHeight+'px', 'height':navHeight+75+'px'}">
       <view class="my-info">
         <image class="player-img" :src="otherUserInfo.avatar"></image>
         <view class="player-name">{{ otherUserInfo.name }}</view>
@@ -230,6 +230,7 @@ export default Vue.extend({
       otherRunAway: false,
       myClose: false,
       otherClose: false,
+      navHeight:0,
     };
   },
   watch: {
@@ -286,7 +287,7 @@ export default Vue.extend({
     canOpen() {
       const { myCard, otherCard, isOpen } = this as any;
       return myCard.length === 2 && otherCard.length === 2;
-    },
+    }
   },
   onLoad() {
     console.log("initPoker...", this.initPoker);
@@ -301,6 +302,11 @@ export default Vue.extend({
         }
       }
     });
+    this.$nextTick(()=>{
+      const {statusBarHeight, titleBarHeight} = getApp().globalData as any;
+      console.log('titleBarHeight...',titleBarHeight)
+      this.navHeight = statusBarHeight + titleBarHeight;
+    })
   },
   onUnload() {
     this.closeSocket();
@@ -348,7 +354,7 @@ export default Vue.extend({
         this.autoLogin().then((res) => {
           const { code } = res as any;
           if (code === 0) {
-            this.getUserProfile();
+            that.getUserProfile();
           }
         });
       } else if (!name && !avatar) {
@@ -487,6 +493,12 @@ export default Vue.extend({
           this.isBegin = isBegin;
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
+          if(otherFirst){
+            this.myFirst = false;
+          }
+          if(otherWin){
+            this.myWin = false;
+          }
           this.otherWin = otherWin;
           // this.myWin = !otherWin;
           // this.myFirst = !otherFirst;
@@ -504,6 +516,7 @@ export default Vue.extend({
         } else {
           if (otherRunAway) {
             this.myCard = [];
+            this.myRunAway = false;
           }
         }
       });
@@ -1018,8 +1031,6 @@ export default Vue.extend({
   color: #ffffff;
 }
 .player-user.one {
-  height: calc(150rpx + 170rpx);
-  padding-top: 170rpx;
 }
 .player-user.two {
   box-sizing: border-box;
