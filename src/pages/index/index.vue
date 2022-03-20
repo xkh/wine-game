@@ -1,8 +1,6 @@
 <template>
   <view class="content" :class="{ green: roomCreated }">
-    <navBar :title="'喷大气'+(roomNum?(roomNum+'房间'):'')">
-      
-    </navBar>
+    <navBar :title="'喷大气' + (roomNum ? roomNum + '房间' : '')"> </navBar>
     <!-- 未登录遮罩 -->
     <view class="stage-no" v-if="!roomCreated">
       <image
@@ -23,7 +21,14 @@
         <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
       </view>
     </view>
-    <view class="player-user one" v-if="roomCreated" :style="{'padding-top':navHeight+'px', 'height':navHeight+75+'px'}">
+    <view
+      class="player-user one"
+      v-if="roomCreated"
+      :style="{
+        'padding-top': navHeight + 'px',
+        height: navHeight + 75 + 'px',
+      }"
+    >
       <view class="my-info">
         <image class="player-img" :src="otherUserInfo.avatar"></image>
         <view class="player-name">{{ otherUserInfo.name }}</view>
@@ -41,8 +46,10 @@
         <text>叫{{ otherScoreNum }}分</text>
         <text class="red" v-if="otherRunAway && otherScoreNum">逃</text>
       </view>
-      <view class="player-landing win" v-if="otherWin && isOpen"
-        >{{ myRunAway ? "避十" : "" }}赢！！！</view
+      <view
+        class="player-landing win"
+        v-if="otherWin && isOpen && pokerList.length"
+        >{{ myRunAway ? "避十" : "" }}赢！</view
       >
       <view class="player-away" v-if="otherId && roomCreated"
         >已逃{{ otherAwayTime }}次</view
@@ -50,6 +57,7 @@
     </view>
     <view class="player-stage" v-if="roomCreated">
       <view class="stage-left">
+        <view class="player-btn over" @tap="eventOverBrfore">结束</view>
         <view
           class="player-btn"
           :class="{ begin: isBegin }"
@@ -67,7 +75,7 @@
           {{ isFirstStatus === 1 ? "黑" : "" }}
           {{ isFirstStatus === 2 ? "红" : "" }}
         </view>
-        <view class="player-btn over" @tap="eventOver">结束</view>
+
         <view
           class="player-btn gap"
           :class="{ begin: isOpen }"
@@ -168,8 +176,10 @@
         ><text>叫{{ myScoreNum }}分</text
         ><text class="red" v-if="myRunAway && myScoreNum">逃</text></view
       >
-      <view class="player-landing win" v-if="myWin && isOpen"
-        >{{ otherRunAway ? "避十" : "" }}赢！！！</view
+      <view
+        class="player-landing win"
+        v-if="myWin && isOpen && pokerList.length"
+        >{{ otherRunAway ? "避十" : "" }}赢！</view
       >
       <view class="player-away" v-if="otherId && roomCreated"
         >已逃{{ myAwayTime }}次</view
@@ -181,18 +191,22 @@
 <script lang="ts">
 import Vue from "vue";
 import heartCheck from "./heartCheck";
-import navBar from '../../components/navBar.vue';
+import navBar from "../../components/navBar.vue";
 // const baseUrl = "http://192.168.31.16:2001/game/";
 const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
-  components: {navBar},
+  components: { navBar },
   data() {
     return {
       poker: {
-        spade: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //黑桃
-        heart: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //红心
-        club: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //梅花
-        diamond: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //方块
+        // spade: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //黑桃
+        // heart: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //红心
+        // club: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //梅花
+        // diamond: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], //方块
+        spade: [1], //黑桃
+        heart: [1], //红心
+        club: [1], //梅花
+        diamond: [1], //方块
         joker: [3, 6], //大小王
       },
       pokerList: [],
@@ -230,7 +244,7 @@ export default Vue.extend({
       otherRunAway: false,
       myClose: false,
       otherClose: false,
-      navHeight:0,
+      navHeight: 0,
     };
   },
   watch: {
@@ -285,9 +299,14 @@ export default Vue.extend({
       return myCard.length === 2 && otherCard.length === 2 && !isOpen;
     },
     canOpen() {
-      const { myCard, otherCard, isOpen } = this as any;
-      return myCard.length === 2 && otherCard.length === 2;
-    }
+      const { myCard, otherCard, pokerList } = this as any;
+      return (
+        (myCard.length === 2 && otherCard.length === 2) ||
+        (myCard.length === 1 &&
+          otherCard.length === 1 &&
+          pokerList.length === 0)
+      );
+    },
   },
   onLoad() {
     console.log("initPoker...", this.initPoker);
@@ -302,11 +321,11 @@ export default Vue.extend({
         }
       }
     });
-    this.$nextTick(()=>{
-      const {statusBarHeight, titleBarHeight} = getApp().globalData as any;
-      console.log('titleBarHeight...',titleBarHeight)
+    this.$nextTick(() => {
+      const { statusBarHeight, titleBarHeight } = getApp().globalData as any;
+      console.log("titleBarHeight...", titleBarHeight);
       this.navHeight = statusBarHeight + titleBarHeight;
-    })
+    });
   },
   onUnload() {
     this.closeSocket();
@@ -422,6 +441,7 @@ export default Vue.extend({
     },
     //初始化
     initSocket(id = "") {
+      const that = this;
       uni.showLoading({
         title: "连接中...",
       });
@@ -458,14 +478,10 @@ export default Vue.extend({
         }
         const { fromId, msg } = JSON.parse(data);
         console.log("websocket监听到消息！！！fromId", fromId, msg);
-        if (msg === "out") {
+        if (msg === "out" || msg === "off") {
           this.otherClose = true;
           this.otherId = "";
           this.eventOver();
-          return;
-        }
-        if (msg === "off") {
-          this.otherClose = true;
           return;
         }
 
@@ -487,16 +503,16 @@ export default Vue.extend({
           myRunAway: otherRunAway,
           myAwayTime: otherAwayTime,
         } = JSON.parse(msg);
-        if (list && list.length) {
+        if (list) {
           this.pokerList = list;
           this.isShuffle = isShuffle;
           this.isBegin = isBegin;
           this.otherCard = otherCard;
           this.otherFirst = otherFirst;
-          if(otherFirst){
+          if (otherFirst) {
             this.myFirst = false;
           }
-          if(otherWin){
+          if (otherWin) {
             this.myWin = false;
           }
           this.otherWin = otherWin;
@@ -510,6 +526,8 @@ export default Vue.extend({
         }
         if (isBegin) {
           this.startSaveLocal(JSON.parse(data));
+        } else if (this.myCard.length || this.otherCard.length) {
+          this.eventOver();
         }
         if (isOpen) {
           this.myWin = !otherWin;
@@ -518,6 +536,19 @@ export default Vue.extend({
             this.myCard = [];
             this.myRunAway = false;
           }
+        }
+        if (isOpen && list.length === 0) {
+          uni.showModal({
+            title: "提示",
+            content: "本局游戏已结束",
+            success: function (res) {
+              if (res.confirm) {
+                that.eventOver();
+              } else if (res.cancel) {
+                console.log("用户点击取消");
+              }
+            },
+          });
         }
       });
       //socket断开后
@@ -577,7 +608,7 @@ export default Vue.extend({
         myScoreNum: this.myScoreNum,
         myRunAway: this.myRunAway,
         myAwayTime: this.myAwayTime,
-        list: this.pokerList.length ? this.pokerList : this.initPoker,
+        list: this.isShuffle && !this.isBegin ? this.initPoker : this.pokerList,
         ...msg,
       };
       console.log("this.socketStatus...", this.socketStatus, params);
@@ -619,6 +650,23 @@ export default Vue.extend({
       }
     },
     //结束游戏
+    eventOverBrfore() {
+      const lingth = this.pokerList.length;
+      const that = this;
+      if (lingth) {
+        uni.showModal({
+          title: "提示！",
+          content: "本局还有" + lingth + "张牌未摸，确定要结束吗？",
+          success: function (res) {
+            if (res.confirm) {
+              that.eventOver();
+            } else if (res.cancel) {
+              console.log("用户点击取消");
+            }
+          },
+        });
+      }
+    },
     eventOver() {
       this.isShuffle = false;
       this.isBegin = false;
@@ -670,28 +718,28 @@ export default Vue.extend({
         }
       }
 
-      if (this.myFirst) {
-        //先手逻辑
-        if (this.myCard.length > this.otherCard.length) {
-          this.toast("等对方摸牌");
-          return;
+      if (!this.canOpen) {
+        if (this.myFirst) {
+          //先手逻辑
+          if (this.myCard.length > this.otherCard.length) {
+            this.toast("等对方摸牌");
+            return;
+          }
+        } else {
+          //后手逻辑
+          if (
+            this.myCard.length === this.otherCard.length &&
+            this.myCard.length !== 2
+          ) {
+            this.toast("等对方摸牌");
+            return;
+          }
         }
-      } else {
-        //后手逻辑
-        if (
-          this.myCard.length === this.otherCard.length &&
-          this.myCard.length !== 2
-        ) {
-          this.toast("等对方摸牌");
-          return;
-        }
-      }
-      if (this.myCard.length === 2) {
-        if (!this.isOpen) {
-          this.toast("待开牌");
-        }
+      } else if (!this.isOpen) {
+        this.toast("待开牌");
         return;
       }
+
       this.myScoreNum = 0;
       this.myRunAway = false;
       this.otherScoreNum = 0;
@@ -778,6 +826,7 @@ export default Vue.extend({
     },
     //open card
     eventOpenCard() {
+      const that = this;
       if (!this.canOpen) return;
       if (this.isOpen) {
         this.myCard = [];
@@ -788,13 +837,27 @@ export default Vue.extend({
         this.sendSocketMessage();
         return;
       }
-      if (this.myCard.length === 2 && this.otherCard.length === 2) {
+      if (this.canOpen) {
         this.isOpen = true;
-        const myWin: any = this.checkMyWin();
-        this.myWin = myWin;
-        this.otherWin = !myWin;
-        this.myFirst = !myWin;
-        this.otherFirst = myWin;
+        if (this.pokerList.length) {
+          const myWin: any = this.checkMyWin();
+          this.myWin = myWin;
+          this.otherWin = !myWin;
+          this.myFirst = !myWin;
+          this.otherFirst = myWin;
+        } else {
+          uni.showModal({
+            title: "提示",
+            content: "本局游戏已结束",
+            success: function (res) {
+              if (res.confirm) {
+                that.eventOver();
+              } else if (res.cancel) {
+                console.log("用户点击取消");
+              }
+            },
+          });
+        }
         this.sendSocketMessage();
       } else {
         this.toast("未达到开牌条件");
@@ -931,7 +994,7 @@ export default Vue.extend({
           sumNum = num1 + num2;
         }
       }
-      realNum = sumNum % 10;
+      realNum = isPair ? sumNum : sumNum % 10;
       return { isPair, realNum, maxNum, maxNumColor, sumNum };
     },
     openCardModal(win: Boolean) {
@@ -1013,7 +1076,7 @@ export default Vue.extend({
   height: 100vh;
   overflow: hidden;
 }
-.content-title{
+.content-title {
   text-align: center;
 }
 .content.green {
