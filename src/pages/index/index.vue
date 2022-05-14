@@ -192,8 +192,8 @@
 import Vue from "vue";
 import heartCheck from "./heartCheck";
 import navBar from "../../components/navBar.vue";
-const baseUrl = "http://192.168.31.18:2001/game/";
-// const baseUrl = "https://api.xonepage.com/game/";
+// const baseUrl = "http://192.168.31.18:2001/game/";
+const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   components: { navBar },
   data() {
