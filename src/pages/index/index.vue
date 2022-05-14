@@ -5,7 +5,7 @@
     <view class="stage-no" v-if="!roomCreated">
       <image
         class="stage-form-back"
-        src="../../static/images/create_room.jpg"
+        src="../../static/images/create_room_new.png"
       />
       <view class="stage-form">
         <view class="get-room-num">
@@ -18,7 +18,7 @@
             :value="roomNum"
           />
         </view>
-        <button class="get-name-btn" @tap="getUserProfile">参与游戏</button>
+        <button class="get-name-btn" @tap="getUserProfile">进入房间</button>
       </view>
     </view>
     <view
@@ -146,7 +146,7 @@
           <view class="all-cards">
             <image
               class="all-cards-img"
-              src="../../static/images/all.jpg"
+              src="../../static/images/all_jiu.png"
             ></image>
           </view>
         </view>
@@ -192,8 +192,8 @@
 import Vue from "vue";
 import heartCheck from "./heartCheck";
 import navBar from "../../components/navBar.vue";
-// const baseUrl = "http://192.168.31.16:2001/game/";
-const baseUrl = "https://api.xonepage.com/game/";
+const baseUrl = "http://192.168.31.18:2001/game/";
+// const baseUrl = "https://api.xonepage.com/game/";
 export default Vue.extend({
   components: { navBar },
   data() {
@@ -736,7 +736,11 @@ export default Vue.extend({
           }
         }
       } else if (!this.isOpen) {
-        this.toast("待开牌");
+        if(this.myCard.length===1){
+          this.toast("最后一张，请先送牌！");
+        }else{
+          this.toast("牌齐，请上分或开牌！");
+        }
         return;
       }
 
@@ -1080,7 +1084,7 @@ export default Vue.extend({
   text-align: center;
 }
 .content.green {
-  background: rgb(0, 48, 0);
+  background:#444444;
 }
 .player-user {
   flex: 0 0 auto;
@@ -1101,8 +1105,10 @@ export default Vue.extend({
   padding-bottom: env(safe-area-inset-bottom);
 }
 .player-stage {
+  height: 100%;
   flex: 1 1 auto;
   display: flex;
+  display: -webkit-flex;
   flex-direction: row;
   width: 750rpx;
 }
@@ -1155,18 +1161,20 @@ export default Vue.extend({
 .stage-form-back {
   width: 100%;
   height: 100%;
+  /* -webkit-filter: blur(5px); */
+/* filter: blur(5px); */
 }
 .stage-form {
   position: absolute;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 0;
+  transform: translate(-50%, -40%);
 }
 .get-room-num {
   height: 80rpx;
   width: 420rpx;
   margin: 0 auto;
-  border: #2fb157 2rpx solid;
+  border: #333333 2rpx solid;
   background: #ffffff;
   border-radius: 10rpx;
 }
@@ -1187,11 +1195,11 @@ export default Vue.extend({
 }
 .all-cards {
   width: 600rpx;
-  height: 374rpx;
+  height: 320rpx;
 }
 .all-cards-img {
   width: 600rpx;
-  height: 374rpx;
+  height: 320rpx;
 }
 .right-other-card {
   flex: 1;
@@ -1266,13 +1274,13 @@ export default Vue.extend({
   height: 80rpx;
   line-height: 80rpx;
   width: 420rpx;
-  background: #2fb157;
+  background: #444;
   border-radius: 10rpx;
   text-align: center;
   color: #ffffff;
   font-weight: bold;
   font-size: 30rpx;
-  margin-top: 40rpx;
+  margin-top: 20rpx;
 }
 
 .player-landing.win {
