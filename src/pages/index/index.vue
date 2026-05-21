@@ -193,7 +193,7 @@ import Vue from "vue";
 import heartCheck from "./heartCheck";
 import navBar from "../../components/navBar.vue";
 // const baseUrl = "http://192.168.31.18:2001/game/";
-const baseUrl = "https://api.xonepage.com/game/";
+const baseUrl = "https://api.aiizone.com/game/";
 export default Vue.extend({
   components: { navBar },
   data() {
@@ -450,7 +450,7 @@ export default Vue.extend({
       }
       //创建连接
       uni.connectSocket({
-        url: `wss://api.xonepage.com/game/wss?id=${id}&room_num=${this.roomNum}`,
+        url: `wss://api.aiizone.com/game/wss?id=${id}&room_num=${this.roomNum}`,
         // url: `ws://192.168.31.16:2001/game/wss?id=${id}&room_num=${this.roomNum}`,
         complete() {
           uni.hideLoading();
