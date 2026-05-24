@@ -45,13 +45,18 @@ export default {
 .bans-title {
   text-align: center;
   color: #fff;
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 .BanContain {
   position: fixed;
   width: 100%;
   top: 0;
   left: 0;
-  z-index: 9;
+  z-index: 999;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.3);
 }
 .back-img {
   width: 34px;

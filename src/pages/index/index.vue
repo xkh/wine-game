@@ -1,10 +1,18 @@
 <template>
   <view class="content" :class="{ green: roomCreated }">
-    <navBar :title="'喷大气' + (roomNum ? roomNum + '房间' : '')"> </navBar>
+    <navBar :title="'喷大气' + (roomCreated && roomNum ? roomNum + '房间' : '')"> </navBar>
     <!-- 未登录遮罩 -->
-    <view class="stage-no" v-if="!roomCreated">
+    <view 
+      class="stage-no" 
+      v-if="!roomCreated"
+    >
       <image
         class="stage-form-back"
+        mode="aspectFill"
+        :style="{
+          'top': navHeight + 'px',
+          'height': 'calc(100% - ' + navHeight + 'px)'
+        }"
         src="../../static/images/create_room_new.png"
       />
       <view class="stage-form">
@@ -1079,30 +1087,35 @@ export default Vue.extend({
   justify-content: center;
   height: 100vh;
   overflow: hidden;
+  background: linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
 }
 .content-title {
   text-align: center;
 }
 .content.green {
-  background:#444444;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 .player-user {
   flex: 0 0 auto;
   display: flex;
-  height: 150rpx;
+  height: 160rpx;
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20rpx;
+  padding: 0 30rpx;
   box-sizing: border-box;
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10rpx);
 }
 .player-user.one {
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 .player-user.two {
   box-sizing: border-box;
-  height: calc(150rpx + env(safe-area-inset-bottom));
+  height: calc(160rpx + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 .player-stage {
   height: 100%;
@@ -1113,31 +1126,37 @@ export default Vue.extend({
   width: 750rpx;
 }
 .player-btn {
-  height: 70rpx;
-  width: 120rpx;
-  line-height: 70rpx;
-  background: #2fb157;
-  border-radius: 10rpx;
-  margin: 15rpx 0 0 15rpx;
+  height: 80rpx;
+  width: 130rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #2fb157 0%, #228b42 100%);
+  border-radius: 16rpx;
+  margin: 12rpx 0 0 12rpx;
   text-align: center;
   color: #ffffff;
-  font-weight: bold;
-  font-size: 30rpx;
+  font-weight: 600;
+  font-size: 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(47, 177, 87, 0.3);
+  transition: all 0.3s ease;
+  border: none;
 }
 
 .player-btn.begin {
-  background: #999999;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
 }
 .player-btn.over {
-  background: #f54551;
+  background: linear-gradient(135deg, #f54551 0%, #c0392b 100%);
+  box-shadow: 0 4rpx 12rpx rgba(245, 69, 81, 0.3);
 }
 .player-btn.gap {
-  /* margin-top: 80rpx; */
+  margin-top: 30rpx;
 }
 .stage-left {
   font-size: 26rpx;
   width: 150rpx;
   flex-shrink: 0;
+  padding: 20rpx 0;
 }
 .stage-right {
   flex: 1;
@@ -1147,6 +1166,7 @@ export default Vue.extend({
   justify-content: space-between;
   overflow: hidden;
   position: relative;
+  padding: 20rpx 0;
 }
 .stage-no {
   position: absolute;
@@ -1154,37 +1174,59 @@ export default Vue.extend({
   top: 0;
   right: 0;
   bottom: 0;
-  /* background: rgba(255, 255, 255, 0.44); */
-  z-index: 9;
-  /* background: '../../static/images/create_room.jpg'; */
+  z-index: 99;
+  background: linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 80rpx;
+  box-sizing: border-box;
 }
 .stage-form-back {
+  position: absolute;
   width: 100%;
-  height: 100%;
-  /* -webkit-filter: blur(5px); */
-/* filter: blur(5px); */
+  left: 0;
+  opacity: 0.77;
 }
 .stage-form {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translate(-50%, -40%);
+  position: relative;
+  z-index: 2;
+  width: 520rpx;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10rpx);
+  border-radius: 32rpx;
+  padding: 60rpx 40rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+  margin-bottom:60rpx;
 }
 .get-room-num {
-  height: 80rpx;
-  width: 420rpx;
+  height: 100rpx;
+  width: 100%;
   margin: 0 auto;
-  border: #333333 2rpx solid;
-  background: #ffffff;
-  border-radius: 10rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20rpx;
+  position: relative;
 }
 .room-num {
-  height: 60rpx;
-  line-height: 60rpx;
+  height: 80rpx;
+  line-height: 80rpx;
   margin-top: 10rpx;
-  width: 380rpx;
+  width: calc(100% - 40rpx);
   margin-left: 20rpx;
   border: 0;
+  background: transparent;
+  color: #16213e;
+  font-size: 32rpx;
+  text-align: center;
+  letter-spacing: 8rpx;
+  font-weight: 600;
+}
+.room-num::placeholder {
+  color: rgba(12, 31, 40, 0.4);
+  letter-spacing: 2rpx;
+  font-size: 24rpx;
 }
 .player-start-list {
   overflow: scroll;
@@ -1192,63 +1234,86 @@ export default Vue.extend({
 }
 .right-all-card {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .all-cards {
-  width: 600rpx;
-  height: 320rpx;
+  width: 500rpx;
+  height: 280rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.3);
 }
 .all-cards-img {
-  width: 600rpx;
-  height: 320rpx;
+  width: 500rpx;
+  height: 280rpx;
 }
 .right-other-card {
   flex: 1;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .right-other-card .card-img {
-  border: 2rpx solid #ffffff;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
 }
 .right-my-card {
   flex: 1;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .card-img {
   position: absolute;
-  height: 300rpx;
-  width: 210rpx;
+  height: 280rpx;
+  width: 196rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
 }
 .right-my-card .card-img {
-  bottom: 0;
+  bottom: 20rpx;
 }
 .card-img .card-img-src {
-  height: 300rpx;
-  width: 210rpx;
+  height: 280rpx;
+  width: 196rpx;
 }
 .not-open .card-img {
-  background: #999999;
-  border-radius: 10rpx;
+  background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+  border-radius: 16rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.2);
 }
 .card-img.img-one,
 .card-img.img-two {
-  height: 300rpx;
-  width: 210rpx;
+  height: 280rpx;
+  width: 196rpx;
 }
 .card-img.img-one {
-  left: 50rpx;
+  left: 80rpx;
   z-index: 1;
+  transform: rotate(-3deg);
 }
 .card-img.img-two {
-  left: 130rpx;
+  left: 180rpx;
   z-index: 2;
+  transform: rotate(3deg);
 }
 .poker-item {
   background: seagreen;
   float: left;
 }
 .player-img {
-  height: 100rpx;
-  width: 100rpx;
-  border-radius: 100rpx;
+  height: 90rpx;
+  width: 90rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
 }
 .my-info {
   display: flex;
@@ -1256,14 +1321,18 @@ export default Vue.extend({
   justify-content: center;
   align-items: center;
   text-align: center;
+  gap: 16rpx;
 }
 .player-name {
   height: 40rpx;
   line-height: 40rpx;
-  width: 120rpx;
+  width: 140rpx;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 28rpx;
+  font-weight: 500;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
 }
 .text-area {
   display: flex;
@@ -1271,22 +1340,58 @@ export default Vue.extend({
 }
 
 .get-name-btn {
-  height: 80rpx;
-  line-height: 80rpx;
-  width: 420rpx;
-  background: #444;
-  border-radius: 10rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: 20rpx;
   text-align: center;
   color: #ffffff;
-  font-weight: bold;
-  font-size: 30rpx;
-  margin-top: 20rpx;
+  font-weight: 600;
+  font-size: 32rpx;
+  margin-top: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(15, 52, 96, 0.4);
+  letter-spacing: 4rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
+.player-landing {
+  font-size: 26rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.15);
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+}
 .player-landing.win {
-  color: #f54551;
+  color: #f39c12;
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.2) 0%, rgba(231, 76, 60, 0.2) 100%);
+  border-color: rgba(243, 156, 18, 0.3);
+  font-weight: 600;
+  animation: pulse 2s infinite;
 }
 .player-landing .red {
-  color: #f54551;
+  color: #e74c3c;
+  font-weight: 600;
+}
+.player-away {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 6rpx 16rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20rpx 10rpx rgba(243, 156, 18, 0.2);
+  }
 }
 </style>
